@@ -80,42 +80,32 @@ import { AuthService } from '../../services/auth.service';
             />
           </div>
 
-          <button
-            type="submit"
-            class="btn"
-            [disabled]="loading"
-            style="width: 100%; height: 3rem; justify-content: center; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(0, 53, 160, 0.2);"
+          <!-- Explanatory note before buttons -->
+          <p
+            style="margin: 0 0 0.8rem; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.45;"
           >
-            {{ loading ? 'Authenticating...' : 'Sign In to Field Guide' }}
-          </button>
+            Each button will complete the credentials needed for you to log in as:
+          </p>
 
-          <!-- Quick Demo One-Click Sign In -->
-          <div
-            style="margin-top: 1.8rem; padding-top: 1.4rem; border-top: 1px solid var(--line);"
-          >
-            <div
-              style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em;"
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
+            <button
+              type="button"
+              (click)="handleQuickLogin('officer')"
+              class="btn"
+              [disabled]="loading"
+              style="width: 100%; height: 3.1rem; justify-content: center; font-size: 0.95rem; font-weight: 700; background: var(--blue); color: #ffffff; border: 1px solid var(--blue); border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 53, 160, 0.2); cursor: pointer;"
             >
-              One-Click Quick Login (Demo):
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
-              <button
-                type="button"
-                (click)="handleQuickFill('officer')"
-                class="btn btn-secondary"
-                style="justify-content: center; font-size: 0.88rem; padding: 0.55rem 0.8rem;"
-              >
-                Officer Fill
-              </button>
-              <button
-                type="button"
-                (click)="handleQuickFill('admin')"
-                class="btn btn-secondary"
-                style="justify-content: center; font-size: 0.88rem; padding: 0.55rem 0.8rem;"
-              >
-                Admin Fill
-              </button>
-            </div>
+              {{ loading && activeRole === 'officer' ? 'Logging in...' : 'Officer Fill' }}
+            </button>
+            <button
+              type="button"
+              (click)="handleQuickLogin('admin')"
+              class="btn"
+              [disabled]="loading"
+              style="width: 100%; height: 3.1rem; justify-content: center; font-size: 0.95rem; font-weight: 700; background: var(--blue); color: #ffffff; border: 1px solid var(--blue); border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 53, 160, 0.2); cursor: pointer;"
+            >
+              {{ loading && activeRole === 'admin' ? 'Logging in...' : 'Admin Fill' }}
+            </button>
           </div>
         </form>
 
@@ -134,6 +124,7 @@ export class LoginComponent {
   password = '';
   error = '';
   loading = false;
+  activeRole: 'admin' | 'officer' | null = null;
 
   constructor(private authService: AuthService) {}
 
@@ -149,10 +140,12 @@ export class LoginComponent {
           : 'Authentication failed. Please verify credentials and backend connection.';
     } finally {
       this.loading = false;
+      this.activeRole = null;
     }
   }
 
-  handleQuickFill(role: 'admin' | 'officer') {
+  async handleQuickLogin(role: 'admin' | 'officer') {
+    this.activeRole = role;
     if (role === 'admin') {
       this.email = 'admin@osbp.com';
       this.password = 'Admin@1234';
@@ -160,5 +153,6 @@ export class LoginComponent {
       this.email = 'officer@osbp.com';
       this.password = 'Officer@1234';
     }
+    await this.handleSubmit();
   }
 }
