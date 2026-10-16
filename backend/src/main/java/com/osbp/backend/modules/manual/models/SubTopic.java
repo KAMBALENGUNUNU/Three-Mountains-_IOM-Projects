@@ -11,7 +11,13 @@ import java.util.List;
  * A SubTopic groups one or more {@link Section} entries.
  */
 @Entity
-@Table(name = "sub_topics")
+@Table(
+    name = "sub_topics",
+    indexes = {
+        @Index(name = "idx_sub_topics_topic_id", columnList = "topic_id"),
+        @Index(name = "idx_sub_topics_sub_number", columnList = "sub_number")
+    }
+)
 public class SubTopic {
 
     @Id

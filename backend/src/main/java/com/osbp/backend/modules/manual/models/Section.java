@@ -9,7 +9,13 @@ import jakarta.persistence.*;
  * and is also indexed by Apache Lucene for full-text search.
  */
 @Entity
-@Table(name = "sections")
+@Table(
+    name = "sections",
+    indexes = {
+        @Index(name = "idx_sections_sub_topic_id", columnList = "sub_topic_id"),
+        @Index(name = "idx_sections_title", columnList = "title")
+    }
+)
 public class Section {
 
     @Id

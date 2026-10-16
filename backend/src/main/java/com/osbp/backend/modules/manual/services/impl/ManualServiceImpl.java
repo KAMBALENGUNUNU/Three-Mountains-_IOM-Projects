@@ -10,6 +10,8 @@ import com.osbp.backend.modules.manual.repositories.TopicRepository;
 import com.osbp.backend.modules.manual.services.ManualService;
 import com.osbp.backend.modules.search.services.LuceneIndexService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class ManualServiceImpl implements ManualService {
     // ------------------------------------------------------------------ //
 
     @Override
+    @Cacheable(value = "toc")
     public TocResponseDTO getTableOfContents() {
         List<Topic> topics = topicRepository.findAllWithSubTopics();
         List<TopicDTO> topicDTOs = topics.stream()
@@ -56,6 +59,7 @@ public class ManualServiceImpl implements ManualService {
     // ------------------------------------------------------------------ //
 
     @Override
+    @Cacheable(value = "sections", key = "#id")
     public SectionDTO getSectionById(Long id) {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + id));
@@ -68,6 +72,7 @@ public class ManualServiceImpl implements ManualService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public SectionDTO updateSection(Long id, UpdateSectionRequestDTO request) {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + id));
@@ -90,6 +95,7 @@ public class ManualServiceImpl implements ManualService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public SectionDTO createSection(Long subTopicId, CreateSectionRequestDTO request) {
         SubTopic subTopic = subTopicRepository.findById(subTopicId)
                 .orElseThrow(() -> new EntityNotFoundException("SubTopic not found with id: " + subTopicId));
@@ -110,6 +116,7 @@ public class ManualServiceImpl implements ManualService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public void deleteSection(Long id) {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + id));
@@ -125,6 +132,7 @@ public class ManualServiceImpl implements ManualService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public TopicDTO updateTopic(Long id, UpdateTopicRequestDTO request) {
         Topic topic = topicRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Topic not found with id: " + id));
@@ -141,6 +149,7 @@ public class ManualServiceImpl implements ManualService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public SubTopicDTO updateSubTopic(Long id, UpdateSubTopicRequestDTO request) {
         SubTopic subTopic = subTopicRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("SubTopic not found with id: " + id));

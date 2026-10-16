@@ -11,7 +11,12 @@ import java.util.List;
  * A Topic contains one or more {@link SubTopic} entries.
  */
 @Entity
-@Table(name = "topics")
+@Table(
+    name = "topics",
+    indexes = {
+        @Index(name = "idx_topics_topic_number", columnList = "topic_number")
+    }
+)
 public class Topic {
 
     @Id

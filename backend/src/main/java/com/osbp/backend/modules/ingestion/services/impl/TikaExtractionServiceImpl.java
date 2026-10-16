@@ -14,6 +14,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -154,6 +155,7 @@ public class TikaExtractionServiceImpl implements TikaExtractionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public void extractAndIngest(MultipartFile file) throws Exception {
         log.info("Starting PDF ingestion from uploaded file: {}", file.getOriginalFilename());
         try (InputStream stream = file.getInputStream()) {
@@ -163,6 +165,7 @@ public class TikaExtractionServiceImpl implements TikaExtractionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public void extractAndIngest(File file) throws Exception {
         log.info("Starting PDF ingestion from local file: {}", file.getAbsolutePath());
         try (InputStream stream = new FileInputStream(file)) {
@@ -172,6 +175,7 @@ public class TikaExtractionServiceImpl implements TikaExtractionService {
 
     @Override
     @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public void extractAndIngest(InputStream stream, String sourceName) throws Exception {
         log.info("Extracting raw text via Apache Tika for: {}", sourceName);
         String rawText = extractTextWithTika(stream);
