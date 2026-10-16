@@ -23,6 +23,10 @@ public class Section {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    /** Concise overview/summary of this section — stored as TEXT in PostgreSQL. */
+    @Column(columnDefinition = "TEXT")
+    private String overview;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sub_topic_id", nullable = false)
     private SubTopic subTopic;
@@ -34,8 +38,13 @@ public class Section {
     protected Section() { }
 
     public Section(String title, String content, SubTopic subTopic) {
+        this(title, content, null, subTopic);
+    }
+
+    public Section(String title, String content, String overview, SubTopic subTopic) {
         this.title = title;
         this.content = content;
+        this.overview = overview;
         this.subTopic = subTopic;
     }
 
@@ -46,9 +55,11 @@ public class Section {
     public Long getId()           { return id; }
     public String getTitle()      { return title; }
     public String getContent()    { return content; }
+    public String getOverview()   { return overview; }
     public SubTopic getSubTopic() { return subTopic; }
 
     public void setTitle(String title)       { this.title = title; }
     public void setContent(String content)   { this.content = content; }
+    public void setOverview(String overview) { this.overview = overview; }
     public void setSubTopic(SubTopic subTopic) { this.subTopic = subTopic; }
 }

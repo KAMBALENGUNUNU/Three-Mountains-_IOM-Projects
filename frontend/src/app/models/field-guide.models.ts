@@ -35,6 +35,7 @@ export interface SubTopic {
   startPage: number;
   endPage: number;
   wordCount?: number;
+  overview?: string;
   children?: SubTopic[];
 }
 
@@ -93,6 +94,7 @@ export interface Article {
   pages: number[];
   pageNumber: number;
   wordCount: number;
+  overview?: string;
   lastUpdated: string;
   author?: string;
   tags?: string[];
@@ -137,6 +139,7 @@ export interface ContentEditPayload {
   id: string;
   title?: string;
   content?: string;
+  overview?: string;
   order?: number;
 }
 

@@ -74,6 +74,9 @@ public class ManualServiceImpl implements ManualService {
 
         section.setTitle(request.title());
         section.setContent(request.content());
+        if (request.overview() != null) {
+            section.setOverview(request.overview().trim().isEmpty() ? null : request.overview().trim());
+        }
         Section saved = sectionRepository.save(section);
 
         try {
@@ -91,7 +94,8 @@ public class ManualServiceImpl implements ManualService {
         SubTopic subTopic = subTopicRepository.findById(subTopicId)
                 .orElseThrow(() -> new EntityNotFoundException("SubTopic not found with id: " + subTopicId));
 
-        Section section = new Section(request.title(), request.content(), subTopic);
+        String overview = (request.overview() != null && !request.overview().isBlank()) ? request.overview().trim() : null;
+        Section section = new Section(request.title(), request.content(), overview, subTopic);
         subTopic.addSection(section);
         Section saved = sectionRepository.save(section);
 
@@ -170,6 +174,6 @@ public class ManualServiceImpl implements ManualService {
     }
 
     private SectionDTO toSectionDTO(Section section) {
-        return new SectionDTO(section.getId(), section.getTitle(), section.getContent());
+        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview());
     }
 }

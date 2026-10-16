@@ -24,6 +24,7 @@ interface BackendSection {
   id: number;
   title: string;
   content: string;
+  overview?: string;
 }
 
 interface BackendSubTopic {
@@ -151,6 +152,7 @@ export class ManualService {
             startPage: startP,
             endPage: endP,
             wordCount: words,
+            overview: sec.overview,
           };
         });
 
@@ -259,6 +261,7 @@ export class ManualService {
       pages: [startPage, endPage],
       pageNumber: startPage,
       wordCount,
+      overview: sec.overview,
       lastUpdated: '2024-02-15',
       author: 'EAC Secretariat & IOM Technical Committee',
       tags: ['EAC', 'OSBP', 'Migration', 'Standard Operating Procedures'],
@@ -580,6 +583,7 @@ export class ManualService {
       this.http.put(`${API_BASE_URL}/admin/sections/${payload.id}`, {
         title: payload.title,
         content: payload.content,
+        overview: payload.overview,
       }),
     );
     return { ok: true };

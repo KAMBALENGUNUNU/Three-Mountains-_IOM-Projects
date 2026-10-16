@@ -352,6 +352,19 @@ export class HomeComponent implements OnInit {
     this.openTopics.set(map);
   }
 
+  formatSnippet(text: string | undefined, title: string): string {
+    if (!text || !text.trim()) {
+      return `Standard operating guidance for ${title}.`;
+    }
+    const clean = text.replace(/\s+/g, ' ').trim();
+    const firstSentenceMatch = clean.match(/^([^.!?]+[.!?])/);
+    let snippet = firstSentenceMatch ? firstSentenceMatch[1].trim() : clean;
+    if (snippet.length > 100) {
+      snippet = snippet.substring(0, 97).trim() + '...';
+    }
+    return snippet;
+  }
+
   async toggleSubtopic(sub: SubTopic) {
     if (this.activeSubtopicId() === sub.id) {
       this.activeSubtopicId.set(null);
@@ -360,16 +373,34 @@ export class HomeComponent implements OnInit {
     this.activeSubtopicId.set(sub.id);
 
     if (!this.previewTexts()[sub.id]) {
+      // 1. If sub already has overview from backend, display it immediately
+      if (sub.overview && sub.overview.trim()) {
+        const snippet =
+          sub.overview.length > 100
+            ? sub.overview.substring(0, 97).trim() + '...'
+            : sub.overview.trim();
+        this.previewTexts.update((p) => ({ ...p, [sub.id]: snippet }));
+        return;
+      }
+
       this.loadingPreview.set(sub.id);
       try {
         const article = await this.manualService.fetchArticle(sub.id);
-        const para = article.content.find((b) => b.type === 'paragraph')?.text;
-        const excerpt = para || `Official operational handbook content for ${sub.title}.`;
+        let excerpt: string;
+        if (article.overview && article.overview.trim()) {
+          excerpt =
+            article.overview.length > 100
+              ? article.overview.substring(0, 97).trim() + '...'
+              : article.overview.trim();
+        } else {
+          const para = article.content.find((b) => b.type === 'paragraph')?.text;
+          excerpt = this.formatSnippet(para, sub.title);
+        }
         this.previewTexts.update((p) => ({ ...p, [sub.id]: excerpt }));
       } catch {
         this.previewTexts.update((p) => ({
           ...p,
-          [sub.id]: `Official operational handbook content for ${sub.title}. Click "Open full page" to view.`,
+          [sub.id]: this.formatSnippet(undefined, sub.title),
         }));
       } finally {
         this.loadingPreview.set(null);

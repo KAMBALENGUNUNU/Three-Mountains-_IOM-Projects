@@ -15,5 +15,11 @@ public record CreateSectionRequestDTO(
         String title,
 
         @NotBlank(message = "Content is required")
-        String content
-) { }
+        String content,
+
+        String overview
+) {
+    public CreateSectionRequestDTO(String title, String content) {
+        this(title, content, null);
+    }
+}

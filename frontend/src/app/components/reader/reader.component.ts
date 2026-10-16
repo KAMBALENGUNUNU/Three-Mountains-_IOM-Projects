@@ -89,6 +89,20 @@ import { IconComponent } from '../icon/icon.component';
                 />
               </div>
 
+              <div style="margin-bottom: 1rem;">
+                <label
+                  style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;"
+                >
+                  Card Overview & Snippet (Managed from Backend):
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="editOverview"
+                  placeholder="Concise 1-sentence summary displayed on topic cards"
+                  style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 6px; font: inherit;"
+                />
+              </div>
+
               <div style="margin-bottom: 1.2rem;">
                 <label
                   style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;"
@@ -242,6 +256,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
   loading = signal(true);
   isEditing = signal(false);
   editTitle = '';
+  editOverview = '';
   editContent = '';
   saving = signal(false);
 
@@ -284,6 +299,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
       const art = await this.manualService.fetchArticle(id);
       this.article.set(art);
       this.editTitle = art.title;
+      this.editOverview = art.overview || '';
       this.editContent = art.content.map((b) => b.text || '').join('\n\n');
 
       const adj = this.manualService.getAdjacentSubtopics(id);
@@ -313,6 +329,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
       await this.manualService.saveContentEdit({
         id: art.subtopicId,
         title: this.editTitle,
+        overview: this.editOverview,
         content: this.editContent,
       });
       this.isEditing.set(false);
