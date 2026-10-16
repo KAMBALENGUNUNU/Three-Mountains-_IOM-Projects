@@ -167,6 +167,40 @@ public class ManualServiceImpl implements ManualService {
         return toSubTopicDTO(saved);
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public void deleteTopic(Long id) {
+        Topic topic = topicRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Topic not found with id: " + id));
+
+        // Remove all sections from search index
+        for (SubTopic st : topic.getSubTopics()) {
+            for (Section s : st.getSections()) {
+                try {
+                    luceneIndexService.deleteSectionIndex(s.getId());
+                } catch (Exception ignored) {}
+            }
+        }
+        topicRepository.delete(topic);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public void deleteSubTopic(Long id) {
+        SubTopic subTopic = subTopicRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("SubTopic not found with id: " + id));
+
+        // Remove all sections from search index
+        for (Section s : subTopic.getSections()) {
+            try {
+                luceneIndexService.deleteSectionIndex(s.getId());
+            } catch (Exception ignored) {}
+        }
+        subTopicRepository.delete(subTopic);
+    }
+
     // ------------------------------------------------------------------ //
     //  Mapping helpers
     // ------------------------------------------------------------------ //

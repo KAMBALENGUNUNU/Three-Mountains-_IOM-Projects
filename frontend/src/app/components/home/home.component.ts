@@ -230,6 +230,14 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                     >
                                       Edit Section
                                     </button>
+                                    <button
+                                      type="button"
+                                      class="btn btn-card-delete"
+                                      (click)="handleDeleteDirect(sub)"
+                                      title="Delete this section"
+                                    >
+                                      Delete
+                                    </button>
                                   }
                                 </div>
                               </div>
@@ -324,6 +332,14 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                       title="Edit this section directly from main page"
                                     >
                                       Edit Section
+                                    </button>
+                                    <button
+                                      type="button"
+                                      class="btn btn-card-delete"
+                                      (click)="handleDeleteDirect(sub)"
+                                      title="Delete this section"
+                                    >
+                                      Delete
                                     </button>
                                   }
                                 </div>
@@ -505,31 +521,42 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   <div class="form-error">{{ editErrorMsg() }}</div>
                 }
 
-                <div class="modal-actions">
+                <div class="modal-actions" style="justify-content: space-between;">
                   <button
                     type="button"
-                    class="btn-cancel"
-                    (click)="editModalOpen.set(false)"
+                    class="btn-delete"
+                    [disabled]="deletingSection() || savingEdit()"
+                    (click)="handleDeleteCurrentSection()"
+                    title="Delete this section"
                   >
-                    Close
+                    {{ deletingSection() ? 'Deleting...' : 'Delete Section' }}
                   </button>
-                  <button
-                    type="button"
-                    class="btn-preview-switch"
-                    (click)="editTab.set('preview')"
-                    [disabled]="!editTitle.trim()"
-                    title="Preview exact page display before publishing live"
-                  >
-                    Preview Page
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-save"
-                    [disabled]="savingEdit() || !editTitle.trim()"
-                    (click)="handleSaveContentEdit()"
-                  >
-                    {{ savingEdit() ? 'Saving...' : 'Save Changes' }}
-                  </button>
+                  <div style="display: flex; gap: 0.8rem;">
+                    <button
+                      type="button"
+                      class="btn-cancel"
+                      (click)="editModalOpen.set(false)"
+                    >
+                      Close
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-preview-switch"
+                      (click)="editTab.set('preview')"
+                      [disabled]="!editTitle.trim()"
+                      title="Preview exact page display before publishing live"
+                    >
+                      Preview Page
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-save"
+                      [disabled]="savingEdit() || !editTitle.trim() || deletingSection()"
+                      (click)="handleSaveContentEdit()"
+                    >
+                      {{ savingEdit() ? 'Saving...' : 'Save Changes' }}
+                    </button>
+                  </div>
                 </div>
               } @else {
                 <!-- Live Page Preview Mode -->
@@ -605,18 +632,29 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     <div class="form-error" style="margin-top: 1rem;">{{ editErrorMsg() }}</div>
                   }
 
-                  <div class="modal-actions" style="margin-top: 1.2rem;">
-                    <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
-                      Back to Edit Form
-                    </button>
+                  <div class="modal-actions" style="justify-content: space-between; margin-top: 1.2rem;">
                     <button
                       type="button"
-                      class="btn-save btn-publish-live"
-                      [disabled]="savingEdit() || !editTitle.trim()"
-                      (click)="handleSaveContentEdit()"
+                      class="btn-delete"
+                      [disabled]="deletingSection() || savingEdit()"
+                      (click)="handleDeleteCurrentSection()"
+                      title="Delete this section"
                     >
-                      {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
+                      {{ deletingSection() ? 'Deleting...' : 'Delete Section' }}
                     </button>
+                    <div style="display: flex; gap: 0.8rem;">
+                      <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
+                        Back to Edit Form
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-save btn-publish-live"
+                        [disabled]="savingEdit() || !editTitle.trim() || deletingSection()"
+                        (click)="handleSaveContentEdit()"
+                      >
+                        {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               }
@@ -1048,6 +1086,38 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         opacity: 0.5;
         cursor: not-allowed;
       }
+      .btn-delete {
+        padding: 0.6rem 1.2rem;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        background: transparent;
+        color: #dc2626;
+        font-weight: 700;
+        font-size: 0.88rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+      }
+      .btn-delete:hover {
+        background: #fef2f2;
+      }
+      .btn-delete:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-card-delete {
+        font-size: 0.84rem;
+        font-weight: 700;
+        padding: 0.45rem 0.85rem;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        background: transparent;
+        color: #dc2626;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-card-delete:hover {
+        background: #fef2f2;
+      }
     `,
   ],
 })
@@ -1071,6 +1141,7 @@ export class HomeComponent implements OnInit {
   editTab = signal<'edit' | 'preview'>('edit');
   loadingSectionEdit = signal(false);
   savingEdit = signal(false);
+  deletingSection = signal(false);
   editSuccessMsg = signal('');
   editErrorMsg = signal('');
   previewImages = signal<Record<string, string>>({});
@@ -1340,6 +1411,49 @@ export class HomeComponent implements OnInit {
       );
     } finally {
       this.savingEdit.set(false);
+    }
+  }
+
+  async handleDeleteDirect(sub: SubTopic) {
+    const ok = window.confirm(
+      `Are you sure you want to delete "${sub.title}"?\n\nThis will permanently remove this section from the manual.`
+    );
+    if (!ok) return;
+
+    try {
+      await this.manualService.deleteSection(sub.id);
+      if (this.activeSubtopicId() === sub.id) {
+        this.activeSubtopicId.set(null);
+      }
+      await this.loadTree();
+    } catch (err: any) {
+      alert(err?.message || 'Failed to delete section.');
+    }
+  }
+
+  async handleDeleteCurrentSection() {
+    const subId = this.selectedSubtopicId();
+    if (!subId) return;
+
+    const title = this.editTitle || 'this section';
+    const ok = window.confirm(
+      `Are you sure you want to permanently delete "${title}"?`
+    );
+    if (!ok) return;
+
+    this.deletingSection.set(true);
+    this.editErrorMsg.set('');
+    try {
+      await this.manualService.deleteSection(subId);
+      this.editModalOpen.set(false);
+      if (this.activeSubtopicId() === subId) {
+        this.activeSubtopicId.set(null);
+      }
+      await this.loadTree();
+    } catch (err: any) {
+      this.editErrorMsg.set(err?.message || 'Failed to delete section.');
+    } finally {
+      this.deletingSection.set(false);
     }
   }
 }

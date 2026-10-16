@@ -174,6 +174,16 @@ public class AdminController {
     }
 
     @Operation(
+            summary = "Delete a top-level topic",
+            description = "ADMIN only. Permanently deletes a topic and all its subtopics and sections from the database."
+    )
+    @DeleteMapping("/topics/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTopic(@PathVariable Long id) {
+        manualService.deleteTopic(id);
+        return ResponseEntity.ok(ApiResponse.ok("Topic deleted successfully", null));
+    }
+
+    @Operation(
             summary = "Update a subtopic",
             description = "ADMIN only. Modifies a subtopic's title and/or ordering number."
     )
@@ -184,6 +194,16 @@ public class AdminController {
 
         SubTopicDTO updated = manualService.updateSubTopic(id, request);
         return ResponseEntity.ok(ApiResponse.ok("SubTopic updated successfully", updated));
+    }
+
+    @Operation(
+            summary = "Delete a subtopic",
+            description = "ADMIN only. Permanently deletes a subtopic and all its sections from the database."
+    )
+    @DeleteMapping("/subtopics/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteSubTopic(@PathVariable Long id) {
+        manualService.deleteSubTopic(id);
+        return ResponseEntity.ok(ApiResponse.ok("SubTopic deleted successfully", null));
     }
 
     // ------------------------------------------------------------------ //

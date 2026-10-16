@@ -67,4 +67,18 @@ public interface ManualService {
      * @return the updated {@link com.osbp.backend.modules.manual.dtos.SubTopicDTO}
      */
     com.osbp.backend.modules.manual.dtos.SubTopicDTO updateSubTopic(Long id, com.osbp.backend.modules.manual.dtos.UpdateSubTopicRequestDTO request);
+
+    /**
+     * Deletes a top-level topic and all its descendants.
+     *
+     * @param id the topic ID
+     */
+    void deleteTopic(Long id);
+
+    /**
+     * Deletes a subtopic and all its sections.
+     *
+     * @param id the subtopic ID
+     */
+    void deleteSubTopic(Long id);
 }

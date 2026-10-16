@@ -593,6 +593,13 @@ export class ManualService {
     return { ok: true };
   }
 
+  async deleteSection(id: string): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.delete(`${API_BASE_URL}/admin/sections/${id}`),
+    );
+    return { ok: true };
+  }
+
   async rebuildIndex(): Promise<{ ok: boolean; pages: number }> {
     await firstValueFrom(this.http.post(`${API_BASE_URL}/admin/rebuild-index`, {}));
     return { ok: true, pages: 127 };
