@@ -645,7 +645,7 @@ export class HomeComponent implements OnInit {
   loading = signal(false);
   adminOpen = signal(false);
 
-  openTopics = signal<Record<string, boolean>>({ '1': true });
+  openTopics = signal<Record<string, boolean>>({});
   activeSubtopicId = signal<string | null>(null);
   previewTexts = signal<Record<string, string>>({});
   loadingPreview = signal<string | null>(null);
