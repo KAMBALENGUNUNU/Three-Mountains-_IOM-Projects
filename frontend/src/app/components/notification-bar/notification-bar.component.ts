@@ -17,15 +17,14 @@ import { AuthService } from '../../services/auth.service';
         aria-label="Operational Notifications"
       >
         <div class="down-bar-content">
-          <!-- Pulse Icon & Label -->
-          <div class="notif-badge">
+          <!-- Live Pulse Indicator -->
+          <div class="notif-badge" aria-hidden="true">
             <span class="pulse-dot"></span>
-            <span class="badge-label">NOTICE</span>
           </div>
 
           <!-- Notification Message -->
           <div class="notif-body">
-            @if (notif.title && notif.title !== 'Notice' && notif.title !== 'Operational Bulletin') {
+            @if (notif.title && notif.title.toLowerCase() !== 'notice' && notif.title.toLowerCase() !== 'notification' && notif.title !== 'Operational Bulletin') {
               <strong class="notif-title">{{ notif.title }}:</strong>
             }
             <span class="notif-text">{{ notif.message }}</span>
@@ -158,15 +157,12 @@ import { AuthService } from '../../services/auth.service';
       .notif-badge {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        justify-content: center;
         background: rgba(0, 0, 0, 0.12);
         color: #1a1a1a;
-        padding: 0.25rem 0.65rem;
-        border-radius: 999px;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.06em;
-        white-space: nowrap;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
         flex-shrink: 0;
       }
       .pulse-dot {
@@ -387,7 +383,7 @@ export class NotificationBarComponent {
     this.sending.set(true);
     this.errorMsg.set('');
     try {
-      await this.notificationService.broadcastNotification('Notice', msg, 'INFO');
+      await this.notificationService.broadcastNotification('Notification', msg, 'INFO');
       this.newMessage = '';
       this.notificationService.openAddModal.set(false);
     } catch (err: any) {
