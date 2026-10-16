@@ -59,6 +59,19 @@ import { IconComponent } from '../icon/icon.component';
           <h1 style="margin: 0.2rem 0 0.5rem; line-height: 1.15;">{{ art.title }}</h1>
           <p class="ref">Official OSBP Manual Section • {{ art.wordCount }} words</p>
 
+          @if (art.overview) {
+            <div
+              style="margin: 1.2rem 0 1.6rem; padding: 1.1rem 1.4rem; background: var(--tint-soft, var(--blue-soft)); border-left: 4px solid var(--tint, var(--blue)); border-radius: 0 8px 8px 0; font-size: 1.05rem; font-weight: 500; color: var(--ink); line-height: 1.6;"
+            >
+              <div
+                style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tint, var(--blue)); margin-bottom: 0.35rem;"
+              >
+                Key Operational Overview
+              </div>
+              <p style="margin: 0;">{{ art.overview }}</p>
+            </div>
+          }
+
           <!-- Content Blocks: Alternating image placeholders and text -->
           <div class="blocks-container">
               @for (block of art.content; track $index; let idx = $index) {
@@ -116,9 +129,17 @@ import { IconComponent } from '../icon/icon.component';
                   <div
                     class="block {{ idx % 2 === 0 ? 'left' : 'right' }} {{ tintClass() }}"
                   >
-                    <div class="ph" role="img" aria-label="Image placeholder">
-                      <app-icon [name]="iconName()" [size]="56" />
-                      <span>Image placeholder</span>
+                    <div class="ph" role="img" aria-label="Section illustration">
+                      @if (idx === 0 && art.imageUrl) {
+                        <img
+                          [src]="art.imageUrl"
+                          alt="{{ art.title }}"
+                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                        />
+                      } @else {
+                        <app-icon [name]="iconName()" [size]="56" />
+                        <span>Image placeholder</span>
+                      }
                     </div>
                     <div class="btxt">
                       <p>{{ block.text }}</p>
@@ -254,6 +275,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
         title: this.editTitle,
         overview: this.editOverview,
         content: this.editContent,
+        imageUrl: art.imageUrl,
       });
       this.isEditing.set(false);
       await this.loadArticle(this.subtopicId);

@@ -33,6 +33,10 @@ public class Section {
     @Column(columnDefinition = "TEXT")
     private String overview;
 
+    /** Optional image URL or base64 data URI for custom section illustration. */
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sub_topic_id", nullable = false)
     private SubTopic subTopic;
@@ -44,13 +48,18 @@ public class Section {
     protected Section() { }
 
     public Section(String title, String content, SubTopic subTopic) {
-        this(title, content, null, subTopic);
+        this(title, content, null, null, subTopic);
     }
 
     public Section(String title, String content, String overview, SubTopic subTopic) {
+        this(title, content, overview, null, subTopic);
+    }
+
+    public Section(String title, String content, String overview, String imageUrl, SubTopic subTopic) {
         this.title = title;
         this.content = content;
         this.overview = overview;
+        this.imageUrl = imageUrl;
         this.subTopic = subTopic;
     }
 
@@ -62,10 +71,12 @@ public class Section {
     public String getTitle()      { return title; }
     public String getContent()    { return content; }
     public String getOverview()   { return overview; }
+    public String getImageUrl()   { return imageUrl; }
     public SubTopic getSubTopic() { return subTopic; }
 
     public void setTitle(String title)       { this.title = title; }
     public void setContent(String content)   { this.content = content; }
     public void setOverview(String overview) { this.overview = overview; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public void setSubTopic(SubTopic subTopic) { this.subTopic = subTopic; }
 }

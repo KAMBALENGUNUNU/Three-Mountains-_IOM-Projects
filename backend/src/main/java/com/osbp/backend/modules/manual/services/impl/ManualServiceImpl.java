@@ -82,6 +82,9 @@ public class ManualServiceImpl implements ManualService {
         if (request.overview() != null) {
             section.setOverview(request.overview().trim().isEmpty() ? null : request.overview().trim());
         }
+        if (request.imageUrl() != null) {
+            section.setImageUrl(request.imageUrl().trim().isEmpty() ? null : request.imageUrl().trim());
+        }
         Section saved = sectionRepository.save(section);
 
         try {
@@ -183,6 +186,6 @@ public class ManualServiceImpl implements ManualService {
     }
 
     private SectionDTO toSectionDTO(Section section) {
-        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview());
+        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview(), section.getImageUrl());
     }
 }

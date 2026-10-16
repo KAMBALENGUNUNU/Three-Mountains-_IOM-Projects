@@ -188,8 +188,16 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                               }}"
                             >
                               <div class="ph" role="img" aria-label="Image placeholder">
-                                <app-icon [name]="getIconName(section.order)" [size]="56" />
-                                <span>Image placeholder</span>
+                                @if (sub.imageUrl || previewImages()[sub.id]) {
+                                  <img
+                                    [src]="sub.imageUrl || previewImages()[sub.id]"
+                                    alt="{{ sub.title }}"
+                                    style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                                  />
+                                } @else {
+                                  <app-icon [name]="getIconName(section.order)" [size]="56" />
+                                  <span>Image placeholder</span>
+                                }
                               </div>
                               <div class="ptxt">
                                 @if (loadingPreview() === sub.id) {
@@ -281,8 +289,16 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                               class="panel {{ sIdx % 2 === 0 ? 'left' : 'right' }} t0"
                             >
                               <div class="ph" role="img" aria-label="Image placeholder">
-                                <app-icon name="t0" [size]="56" />
-                                <span>Image placeholder</span>
+                                @if (sub.imageUrl || previewImages()[sub.id]) {
+                                   <img
+                                     [src]="sub.imageUrl || previewImages()[sub.id]"
+                                     alt="{{ sub.title }}"
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                                   />
+                                 } @else {
+                                   <app-icon name="t0" [size]="56" />
+                                   <span>Image placeholder</span>
+                                 }
                               </div>
                               <div class="ptxt">
                                 <p>
@@ -347,8 +363,28 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               <button type="button" class="btn-close" (click)="editModalOpen.set(false)">✕</button>
             </div>
 
+            <!-- Editor Navigation Tabs -->
+            <div class="modal-tabs">
+              <button
+                type="button"
+                class="modal-tab-btn"
+                [class.active]="editTab() === 'edit'"
+                (click)="editTab.set('edit')"
+              >
+                ✏️ Edit Form
+              </button>
+              <button
+                type="button"
+                class="modal-tab-btn"
+                [class.active]="editTab() === 'preview'"
+                (click)="editTab.set('preview')"
+              >
+                👁️ Live Page Preview
+              </button>
+            </div>
+
             <div class="modal-body">
-              <!-- Section Selector Dropdown -->
+              <!-- Section Selector Dropdown (Always visible at top so admin knows what is being edited) -->
               <div class="form-group">
                 <label for="subtopic-picker">Select Section / Page to Edit:</label>
                 <select
@@ -367,7 +403,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <div style="padding: 2.5rem; text-align: center; color: var(--muted); font-size: 0.95rem;">
                   Loading section details...
                 </div>
-              } @else {
+              } @else if (editTab() === 'edit') {
                 <!-- Section Title -->
                 <div class="form-group">
                   <label for="edit-title">Section Title:</label>
@@ -378,6 +414,58 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     class="form-input"
                     placeholder="Section Title"
                   />
+                </div>
+
+                <!-- Page Image Management (File Upload or Image URL) -->
+                <div class="form-group">
+                  <label>Section Page Image / Photo:</label>
+                  <div class="image-uploader-card">
+                    <div class="image-uploader-controls">
+                      <label class="btn-upload-file">
+                        📁 Choose Image File
+                        <input
+                          type="file"
+                          accept="image/*"
+                          (change)="onImageFileSelected($event)"
+                          style="display: none;"
+                        />
+                      </label>
+                      <span class="upload-or">or</span>
+                      <input
+                        type="text"
+                        [(ngModel)]="editImageUrl"
+                        placeholder="Paste Image URL (https://... or data:image...)"
+                        class="form-input"
+                        style="flex: 1; min-width: 220px;"
+                      />
+                      @if (editImageUrl) {
+                        <button
+                          type="button"
+                          class="btn-remove-img"
+                          (click)="removeImage()"
+                          title="Remove custom image"
+                        >
+                          ✕ Remove
+                        </button>
+                      }
+                    </div>
+
+                    @if (editImageUrl) {
+                      <div class="img-preview-box">
+                        <img [src]="editImageUrl" alt="Section Image Preview" class="img-thumb" />
+                        <div class="img-preview-meta">
+                          <span class="badge-success">✓ Image Attached</span>
+                          <span class="img-preview-hint">
+                            This image will appear on the section page and in card previews.
+                          </span>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="img-empty-box">
+                        <span>📷 No custom image selected (default topic illustration placeholder will be used)</span>
+                      </div>
+                    }
+                  </div>
                 </div>
 
                 <!-- Card Overview / Summary (snippet shown on home card) -->
@@ -403,7 +491,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   </label>
                   <textarea
                     id="edit-content"
-                    rows="9"
+                    rows="8"
                     [(ngModel)]="editContentText"
                     class="form-input form-textarea"
                     placeholder="Enter section content text..."
@@ -427,12 +515,109 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   </button>
                   <button
                     type="button"
+                    class="btn-preview-switch"
+                    (click)="editTab.set('preview')"
+                    [disabled]="!editTitle.trim()"
+                    title="Preview exact page display before publishing live"
+                  >
+                    👁️ Preview Page
+                  </button>
+                  <button
+                    type="button"
                     class="btn-save"
                     [disabled]="savingEdit() || !editTitle.trim()"
                     (click)="handleSaveContentEdit()"
                   >
                     {{ savingEdit() ? 'Saving...' : 'Save Changes' }}
                   </button>
+                </div>
+              } @else {
+                <!-- Live Page Preview Mode -->
+                <div class="live-preview-container">
+                  <div class="preview-notice-bar">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                      <span class="preview-badge-live">LIVE PREVIEW</span>
+                      <span style="font-size: 0.88rem; color: #334155; font-weight: 600;">
+                        How this page will appear to readers before publishing:
+                      </span>
+                    </div>
+                    <button type="button" class="btn-back-to-edit" (click)="editTab.set('edit')">
+                      ← Back to Editing
+                    </button>
+                  </div>
+
+                  <div class="preview-reader-mock">
+                    <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 0.4rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
+                      Official OSBP Manual Curriculum
+                    </p>
+
+                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; color: #00143c; line-height: 1.2;">
+                      {{ editTitle || 'Untitled Section' }}
+                    </h1>
+
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1.2rem; font-weight: 600;">
+                      Official OSBP Manual Section • ~{{ getPreviewWordCount() }} words
+                    </p>
+
+                    @if (editOverview.trim()) {
+                      <div class="preview-overview-box">
+                        <div class="preview-overview-title">Key Operational Overview</div>
+                        <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #1e293b; font-weight: 500;">
+                          {{ editOverview }}
+                        </p>
+                      </div>
+                    }
+
+                    <div class="preview-content-layout">
+                      <div class="ph" role="img" aria-label="Section illustration">
+                        @if (editImageUrl) {
+                          <img
+                            [src]="editImageUrl"
+                            alt="{{ editTitle }}"
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                          />
+                        } @else {
+                          <app-icon name="book" [size]="56" />
+                          <span>Image placeholder</span>
+                        }
+                      </div>
+
+                      <div class="ptxt">
+                        @if (getPreviewParagraphs().length > 0) {
+                          @for (para of getPreviewParagraphs(); track $index) {
+                            <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
+                              {{ para }}
+                            </p>
+                          }
+                        } @else {
+                          <p style="color: #94a3b8; font-style: italic;">
+                            No content entered yet for this section.
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  @if (editSuccessMsg()) {
+                    <div class="form-success" style="margin-top: 1rem;">{{ editSuccessMsg() }}</div>
+                  }
+                  @if (editErrorMsg()) {
+                    <div class="form-error" style="margin-top: 1rem;">{{ editErrorMsg() }}</div>
+                  }
+
+                  <div class="modal-actions" style="margin-top: 1.2rem;">
+                    <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
+                      ← Back to Edit Form
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-save btn-publish-live"
+                      [disabled]="savingEdit() || !editTitle.trim()"
+                      (click)="handleSaveContentEdit()"
+                    >
+                      {{ savingEdit() ? 'Publishing...' : '🚀 Save & Publish Live' }}
+                    </button>
+                  </div>
                 </div>
               }
             </div>
@@ -517,7 +702,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       }
       .edit-modal-card {
         width: 100%;
-        max-width: 680px;
+        max-width: 760px;
         max-height: 90vh;
         background: #ffffff;
         border-radius: 12px;
@@ -553,6 +738,38 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         color: #64748b;
         cursor: pointer;
       }
+
+      /* Modal Navigation Tabs */
+      .modal-tabs {
+        display: flex;
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0 1.2rem;
+        gap: 0.5rem;
+      }
+      .modal-tab-btn {
+        padding: 0.75rem 1.2rem;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #64748b;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.15s;
+      }
+      .modal-tab-btn:hover {
+        color: #00143c;
+      }
+      .modal-tab-btn.active {
+        color: #00143c;
+        border-bottom-color: #FFB81C;
+        background: #ffffff;
+      }
+
       .modal-body {
         padding: 1.5rem 1.8rem;
       }
@@ -587,6 +804,200 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         line-height: 1.5;
         resize: vertical;
       }
+
+      /* Image Uploader Styling */
+      .image-uploader-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.9rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .image-uploader-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        flex-wrap: wrap;
+      }
+      .btn-upload-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: #002244;
+        color: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.55rem 0.9rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .btn-upload-file:hover {
+        background: #00143c;
+      }
+      .upload-or {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+      }
+      .btn-remove-img {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #991b1b;
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 0.55rem 0.85rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-remove-img:hover {
+        background: #fecaca;
+      }
+      .img-preview-box {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.6rem;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+      }
+      .img-thumb {
+        width: 100px;
+        height: 75px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+      }
+      .img-preview-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      .badge-success {
+        display: inline-block;
+        width: fit-content;
+        background: #dcfce7;
+        color: #166534;
+        font-size: 0.75rem;
+        font-weight: 800;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        letter-spacing: 0.03em;
+      }
+      .img-preview-hint {
+        font-size: 0.82rem;
+        color: #64748b;
+      }
+      .img-empty-box {
+        padding: 0.65rem 0.8rem;
+        background: #f1f5f9;
+        border: 1px dashed #cbd5e1;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        color: #64748b;
+      }
+      .btn-preview-switch {
+        padding: 0.6rem 1.2rem;
+        border: 1px solid #002244;
+        border-radius: 6px;
+        background: #f0f7ff;
+        color: #002244;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-preview-switch:hover {
+        background: #002244;
+        color: #ffffff;
+      }
+      .btn-preview-switch:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .btn-publish-live {
+        background: #FFB81C;
+        color: #00143c;
+        box-shadow: 0 2px 6px rgba(255, 184, 28, 0.4);
+      }
+      .btn-publish-live:hover {
+        background: #e5a414;
+      }
+
+      /* Live Preview Mode Styling */
+      .live-preview-container {
+        display: flex;
+        flex-direction: column;
+      }
+      .preview-notice-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        padding: 0.65rem 1rem;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+      .preview-badge-live {
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+      }
+      .btn-back-to-edit {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #1e293b;
+      }
+      .btn-back-to-edit:hover {
+        background: #f1f5f9;
+      }
+      .preview-reader-mock {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.6rem;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.03);
+      }
+      .preview-overview-box {
+        border-left: 4px solid var(--blue, #003399);
+        background: #eef4ff;
+        padding: 1rem 1.25rem;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 1.4rem;
+      }
+      .preview-overview-title {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--blue, #003399);
+        margin-bottom: 0.3rem;
+      }
+      .preview-content-layout {
+        display: flex;
+        gap: 1.4rem;
+        align-items: flex-start;
+        border-left: 3px solid var(--blue, #003399);
+        padding-left: 1.1rem;
+      }
+
       .form-success {
         padding: 0.75rem 1rem;
         background: #ecfdf5;
@@ -656,10 +1067,13 @@ export class HomeComponent implements OnInit {
   editTitle = '';
   editOverview = '';
   editContentText = '';
+  editImageUrl = '';
+  editTab = signal<'edit' | 'preview'>('edit');
   loadingSectionEdit = signal(false);
   savingEdit = signal(false);
   editSuccessMsg = signal('');
   editErrorMsg = signal('');
+  previewImages = signal<Record<string, string>>({});
 
   // Dropdown list computed from tree
   allSubtopicsList = computed(() => {
@@ -812,6 +1226,7 @@ export class HomeComponent implements OnInit {
   async openContentEditor() {
     this.editSuccessMsg.set('');
     this.editErrorMsg.set('');
+    this.editTab.set('edit');
     const all = this.allSubtopicsList();
     if (all.length > 0) {
       const targetId = this.selectedSubtopicId() || all[0].id;
@@ -824,6 +1239,7 @@ export class HomeComponent implements OnInit {
   async openDirectEdit(sub: SubTopic) {
     this.editSuccessMsg.set('');
     this.editErrorMsg.set('');
+    this.editTab.set('edit');
     this.selectedSubtopicId.set(sub.id);
     await this.loadSectionDataForEdit(sub.id);
     this.editModalOpen.set(true);
@@ -842,12 +1258,49 @@ export class HomeComponent implements OnInit {
       const art = await this.manualService.fetchArticle(id);
       this.editTitle = art.title || '';
       this.editOverview = art.overview || '';
+      this.editImageUrl = art.imageUrl || '';
       this.editContentText = art.content.map((b) => b.text || '').join('\n\n');
     } catch (err: any) {
       this.editErrorMsg.set('Failed to load section data.');
     } finally {
       this.loadingSectionEdit.set(false);
     }
+  }
+
+  onImageFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Selected image exceeds 5MB limit. Please choose a smaller image.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target?.result as string;
+        if (result) {
+          this.editImageUrl = result;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage() {
+    this.editImageUrl = '';
+  }
+
+  getPreviewParagraphs(): string[] {
+    if (!this.editContentText) return [];
+    return this.editContentText
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+  }
+
+  getPreviewWordCount(): number {
+    if (!this.editContentText) return 0;
+    return this.editContentText.trim().split(/\s+/).filter(Boolean).length;
   }
 
   async handleSaveContentEdit() {
@@ -864,17 +1317,22 @@ export class HomeComponent implements OnInit {
         title: this.editTitle,
         overview: this.editOverview,
         content: this.editContentText,
+        imageUrl: this.editImageUrl,
       });
 
       this.editSuccessMsg.set('✓ Content successfully saved and updated in database!');
 
-      // Update local preview snippet immediately so cards show updated text
+      // Update local preview snippet & image immediately so cards reflect updated text & image
       this.previewTexts.update((p) => ({
         ...p,
         [subId]: this.editOverview.trim() || this.formatSnippet(this.editContentText, this.editTitle),
       }));
+      this.previewImages.update((p) => ({
+        ...p,
+        [subId]: this.editImageUrl,
+      }));
 
-      // Reload tree so titles in menu/cards are updated
+      // Reload tree so titles/images in menu/cards are updated
       await this.loadTree();
     } catch (err: any) {
       this.editErrorMsg.set(
