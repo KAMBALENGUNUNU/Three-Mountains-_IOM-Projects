@@ -107,16 +107,6 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     Sign out
                   </button>
                 </div>
-
-                @if (user.role === 'admin') {
-                  <button
-                    (click)="openAdminModal()"
-                    class="btn btn-gold"
-                    style="justify-content: center; width: 100%; font-size: 0.92rem;"
-                  >
-                    Admin Management Suite
-                  </button>
-                }
               }
             </div>
           </div>
