@@ -1,7 +1,10 @@
 package com.osbp.backend.modules.search.services.impl;
 
+import com.osbp.backend.modules.manual.models.Section;
+import com.osbp.backend.modules.manual.repositories.SectionRepository;
 import com.osbp.backend.modules.search.dtos.SearchHitDTO;
 import com.osbp.backend.modules.search.dtos.SearchResultDTO;
+import com.osbp.backend.modules.search.services.LuceneIndexService;
 import com.osbp.backend.modules.search.services.LuceneSearchService;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -17,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ import java.util.regex.Pattern;
 /**
  * Runs full-text searches against the Lucene index with occurrence metrics,
  * snippet extraction, and configurable result limits.
+ * Includes automatic index verification, on-the-fly container rebuilding,
+ * and seamless PostgreSQL database search fallback.
  */
 @Service
 public class LuceneSearchServiceImpl implements LuceneSearchService {
@@ -38,6 +42,15 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
 
     @Value("${lucene.index.path}")
     private String indexPath;
+
+    private final SectionRepository sectionRepository;
+    private final LuceneIndexService luceneIndexService;
+
+    public LuceneSearchServiceImpl(SectionRepository sectionRepository,
+                                   LuceneIndexService luceneIndexService) {
+        this.sectionRepository = sectionRepository;
+        this.luceneIndexService = luceneIndexService;
+    }
 
     @Override
     public List<SearchHitDTO> search(String queryString) throws Exception {
@@ -52,9 +65,23 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
 
         String queryTrimmed = queryString.trim();
         java.nio.file.Path path = Paths.get(indexPath);
-        if (!Files.exists(path)) {
-            log.warn("Lucene index directory does not exist: {}. Returning empty results.", indexPath);
-            return new SearchResultDTO(queryTrimmed, 0, 0, List.of());
+
+        boolean hasIndex = false;
+        if (Files.exists(path)) {
+            try (Directory dir = FSDirectory.open(path)) {
+                hasIndex = DirectoryReader.indexExists(dir);
+            } catch (Exception ignored) {}
+        }
+
+        // If Lucene index does not exist in this container, trigger async/on-demand rebuild and use DB fallback
+        if (!hasIndex) {
+            log.warn("Lucene search index directory does not exist or has no segments at: {}. Triggering rebuild and serving from PostgreSQL database.", indexPath);
+            try {
+                luceneIndexService.rebuildIndex();
+            } catch (Exception e) {
+                log.error("Failed to rebuild Lucene index on-the-fly: {}", e.getMessage());
+            }
+            return databaseFallbackSearch(queryTrimmed, limit);
         }
 
         try (Directory directory = FSDirectory.open(path);
@@ -62,7 +89,8 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
              StandardAnalyzer analyzer = new StandardAnalyzer()) {
 
             if (reader.numDocs() == 0) {
-                return new SearchResultDTO(queryTrimmed, 0, 0, List.of());
+                log.warn("Lucene index at {} has 0 docs. Using database search.", indexPath);
+                return databaseFallbackSearch(queryTrimmed, limit);
             }
 
             IndexSearcher searcher = new IndexSearcher(reader);
@@ -98,6 +126,15 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
             TopDocs topDocs = searcher.search(combinedQuery, maxHits);
 
             long matchingSections = topDocs.totalHits.value;
+
+            // If Lucene produced 0 hits (e.g. specialized terminology or partial word prefix), try database fallback
+            if (matchingSections == 0) {
+                SearchResultDTO dbResults = databaseFallbackSearch(queryTrimmed, limit);
+                if (dbResults.matchingSectionsCount() > 0) {
+                    return dbResults;
+                }
+            }
+
             long globalOccurrences = 0;
             List<SearchHitDTO> hits = new ArrayList<>();
 
@@ -123,10 +160,54 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
             }
 
             return new SearchResultDTO(queryTrimmed, matchingSections, globalOccurrences, hits);
-        } catch (IOException ex) {
-            log.error("Lucene I/O error during search for '{}': {}", queryString, ex.getMessage(), ex);
-            throw ex;
+        } catch (Exception ex) {
+            log.error("Lucene error during search for '{}': {}. Falling back to PostgreSQL search.", queryTrimmed, ex.getMessage());
+            return databaseFallbackSearch(queryTrimmed, limit);
         }
+    }
+
+    /**
+     * Database-level search fallback using PostgreSQL directly.
+     * Ensures search NEVER fails in cloud/container environments.
+     */
+    private SearchResultDTO databaseFallbackSearch(String queryTrimmed, Integer limit) {
+        log.info("Executing database fallback search for query: '{}'", queryTrimmed);
+        List<Section> matching = sectionRepository.searchByKeyword(queryTrimmed);
+        if (matching.isEmpty()) {
+            return new SearchResultDTO(queryTrimmed, 0, 0, List.of());
+        }
+
+        Pattern wordPattern = Pattern.compile(Pattern.quote(queryTrimmed), Pattern.CASE_INSENSITIVE);
+        long globalOccurrences = 0;
+        List<SearchHitDTO> hits = new ArrayList<>();
+        int max = (limit != null && limit > 0) ? limit : DEFAULT_MAX_RESULTS;
+
+        for (Section section : matching) {
+            String title = section.getTitle();
+            String content = section.getContent();
+            int sectionOccurrences = countOccurrences(title + "\n" + content, wordPattern);
+            globalOccurrences += sectionOccurrences;
+            String snippet = buildContextSnippet(content, title, queryTrimmed);
+
+            hits.add(new SearchHitDTO(
+                    section.getId(),
+                    title,
+                    snippet,
+                    1.0f,
+                    Math.max(1, sectionOccurrences)
+            ));
+
+            if (hits.size() >= max) {
+                break;
+            }
+        }
+
+        return new SearchResultDTO(
+                queryTrimmed,
+                hits.size(),
+                globalOccurrences,
+                hits
+        );
     }
 
     private String buildFuzzyQueryString(String raw) {
@@ -156,10 +237,8 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
             return title;
         }
 
-        // Look for the first occurrence of the term in the content
         int idx = content.toLowerCase().indexOf(term.toLowerCase());
         if (idx == -1) {
-            // Term may be in title or matched fuzzily; return first 200 chars
             return content.length() <= 200 ? content : content.substring(0, 200) + "…";
         }
 

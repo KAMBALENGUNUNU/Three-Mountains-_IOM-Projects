@@ -17,4 +17,10 @@ public interface SectionRepository extends JpaRepository<Section, Long> {
      * Used by the Lucene indexing service to load all sections for re-indexing.
      */
     List<Section> findAllByOrderByIdAsc();
+
+    /**
+     * Database-level fallback search when Lucene is indexing or unavailable.
+     */
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Section s WHERE LOWER(s.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(s.content) LIKE LOWER(CONCAT('%', :q, '%')) ORDER BY s.id ASC")
+    List<Section> searchByKeyword(@org.springframework.data.repository.query.Param("q") String q);
 }

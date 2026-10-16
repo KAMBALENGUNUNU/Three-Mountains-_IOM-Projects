@@ -30,7 +30,8 @@ public class DataSeeder {
             PasswordEncoder passwordEncoder,
             TopicRepository topicRepository,
             TikaExtractionService tikaExtractionService,
-            com.osbp.backend.modules.notification.repositories.NotificationRepository notificationRepository) {
+            com.osbp.backend.modules.notification.repositories.NotificationRepository notificationRepository,
+            com.osbp.backend.modules.search.services.LuceneIndexService luceneIndexService) {
         return args -> {
             // 1. Seed Accounts
             seedUserIfNotExists(userRepository, passwordEncoder, "admin@osbp.com", "Admin@1234", Role.ADMIN);
@@ -66,6 +67,33 @@ public class DataSeeder {
                 }
             } else {
                 log.info("Manual topics already present (count={}) — skipping initial PDF ingestion.", topicRepository.count());
+            }
+
+            // 4. Ensure Lucene Search Index is populated (critical for Render / Heroku ephemeral container disks)
+            if (topicRepository.count() > 0) {
+                try {
+                    String userHome = System.getProperty("user.home", ".");
+                    String lucenePath = System.getenv("LUCENE_INDEX_PATH");
+                    if (lucenePath == null || lucenePath.isBlank()) {
+                        lucenePath = userHome + "/osbp-lucene-index";
+                    }
+                    java.nio.file.Path p = java.nio.file.Paths.get(lucenePath);
+                    boolean hasIndex = false;
+                    if (java.nio.file.Files.exists(p)) {
+                        try (org.apache.lucene.store.Directory dir = org.apache.lucene.store.FSDirectory.open(p)) {
+                            hasIndex = org.apache.lucene.index.DirectoryReader.indexExists(dir);
+                        } catch (Exception ignored) {}
+                    }
+                    if (!hasIndex) {
+                        log.info("🔍 Lucene search index missing in container environment. Building index from PostgreSQL database...");
+                        luceneIndexService.rebuildIndex();
+                        log.info("✅ Lucene search index successfully built and ready for production search queries.");
+                    } else {
+                        log.info("🔍 Lucene search index verified on disk.");
+                    }
+                } catch (Exception e) {
+                    log.error("⚠️ Error checking/building Lucene search index on startup: {}", e.getMessage(), e);
+                }
             }
         };
     }

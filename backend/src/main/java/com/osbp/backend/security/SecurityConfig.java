@@ -49,10 +49,12 @@ public class SecurityConfig {
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public — auth, notifications & Swagger
+                // Public — auth, notifications, manual curriculum, search & Swagger
                 .requestMatchers(
                         "/api/auth/**",
                         "/api/notifications",
+                        "/api/manual/**",
+                        "/api/search/**",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/api-docs/**",
@@ -60,8 +62,6 @@ public class SecurityConfig {
                 ).permitAll()
                 // Admin only
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                // Authenticated users for manual and search APIs
-                .requestMatchers("/api/manual/**", "/api/search/**").authenticated()
                 // Any other API route requires authentication
                 .requestMatchers("/api/**").authenticated()
                 // All non-API requests (static assets, index.html, SPA routing) are public

@@ -21,8 +21,8 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow common frontend dev origins; restrict in production
-        config.setAllowedOriginPatterns(List.of("http://localhost:*", "https://*.osbp.com"));
+        // Allow common frontend dev origins and deployed domains (Render, Heroku, Vercel, Netlify)
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("Authorization"));
