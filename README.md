@@ -53,9 +53,11 @@ Unified full-stack application digitizing the East African Community (EAC) One-S
 
 4. **Automatic Database Seeding:**
    - On initial container launch, the Spring Boot `DataSeeder` automatically parses `OSBP MIGRATION MODULE-v 5.4. en.pdf` into structured sections and seeds default admin credentials.
-   - Default administrator account:
-     - **Email:** `admin@osbp.org`
-     - **Password:** `Admin@12345`
+   - Default seeded accounts:
+     - **Admin:** `admin@osbp.com` (Password: `Admin@1234`)
+     - **Admin:** `admin@eac.int` (Password: `Admin@1234`)
+     - **Officer / User:** `officer@osbp.com` (Password: `Officer@1234`)
+     - **Officer / User:** `officer.namanga@eac.int` (Password: `Officer@1234`)
 
 ---
 
