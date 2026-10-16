@@ -332,6 +332,47 @@ button {
   transform: rotate(180deg);
 }
 
+.c-top-close-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 1.4rem 0.45rem;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px dashed var(--line);
+  margin-bottom: 0.6rem;
+}
+
+.c-top-close-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.btn-close-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-close-details:hover {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+
 .t1 {
   --tint: var(--blue);
   --tint-soft: var(--blue-soft);

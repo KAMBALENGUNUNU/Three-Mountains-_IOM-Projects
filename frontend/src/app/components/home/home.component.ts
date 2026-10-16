@@ -46,10 +46,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         <aside class="hleft">
           <h1>OSBP Field Guide</h1>
           <hr />
-          <p>
-            Welcome to the OSBP Field Guide. Use this page to find your way around the platform and
-            open the topic you need.
-          </p>
+          <p>Welcome to the OSBP Field Guide.</p>
 
           <h2>How to use this guide</h2>
           <ol>
@@ -58,20 +55,11 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               image, title and the number of pages inside it.
             </li>
             <li>
-              <strong>Open the details.</strong> Select <em>Details</em> at the bottom of a topic to
-              see all its pages. Select it again to close the list.
-            </li>
-            <li>
-              <strong>Preview a page.</strong> Select a page marked with the open book icon to see a
-              short preview and image, then choose <em>Open full page</em> to read it in full.
+              Open the details by selecting 'Details' at the bottom of a topic block.
             </li>
             <li>
               <strong>Move between pages.</strong> At the bottom of each page, use <em>Previous</em>
               and <em>Next</em>. Use <em>Back</em> at the top to return to where you were.
-            </li>
-            <li>
-              <strong>Search.</strong> Use the search button to look for a word or phrase and jump
-              straight to the right page.
             </li>
           </ol>
 
@@ -165,6 +153,21 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                 <!-- Subtopics List (when card details is open) -->
                 @if (isTopicOpen(section.order.toString())) {
+                  <div class="c-top-close-bar">
+                    <span class="c-top-close-count">
+                      {{ getAllSubtopics(section).length }} {{ getAllSubtopics(section).length === 1 ? 'Page' : 'Pages' }}
+                    </span>
+                    <button
+                      type="button"
+                      class="btn-close-details"
+                      (click)="toggleTopic(section.order.toString())"
+                      title="Close details"
+                    >
+                      <app-icon name="close" [size]="12" />
+                      <span>Close details</span>
+                    </button>
+                  </div>
+
                   <ul class="c-list" [attr.id]="'subs-' + section.order">
                     @for (sub of getAllSubtopics(section); track sub.id; let sIdx = $index) {
                       <li class="c-sub">
@@ -257,7 +260,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   [attr.aria-expanded]="isTopicOpen(section.order.toString())"
                 >
                   <app-icon name="chev" [size]="14" customClass="chev" />
-                  <span>Details</span>
+                  <span>{{ isTopicOpen(section.order.toString()) ? 'Close details' : 'Details' }}</span>
                 </button>
               </li>
             }
@@ -277,6 +280,21 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 </div>
 
                 @if (isTopicOpen('ref-' + sec.order)) {
+                  <div class="c-top-close-bar">
+                    <span class="c-top-close-count">
+                      {{ getAllSubtopics(sec).length }} Resources
+                    </span>
+                    <button
+                      type="button"
+                      class="btn-close-details"
+                      (click)="toggleTopic('ref-' + sec.order)"
+                      title="Close details"
+                    >
+                      <app-icon name="close" [size]="12" />
+                      <span>Close details</span>
+                    </button>
+                  </div>
+
                   <ul class="c-list" [attr.id]="'subs-' + sec.order">
                     @for (sub of getAllSubtopics(sec); track sub.id; let sIdx = $index) {
                       <li class="c-sub">
@@ -359,7 +377,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   [attr.aria-expanded]="isTopicOpen('ref-' + sec.order)"
                 >
                   <app-icon name="chev" [size]="14" customClass="chev" />
-                  <span>Details</span>
+                  <span>{{ isTopicOpen('ref-' + sec.order) ? 'Close details' : 'Details' }}</span>
                 </button>
               </li>
             }
