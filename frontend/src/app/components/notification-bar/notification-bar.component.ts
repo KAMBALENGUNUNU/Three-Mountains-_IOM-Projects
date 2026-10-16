@@ -39,7 +39,7 @@ import { AuthService } from '../../services/auth.service';
                 (click)="notificationService.openAddModal.set(true)"
                 title="Send notification to all users"
               >
-                + Add Notification
+                Add Notification
               </button>
             }
 
@@ -50,7 +50,7 @@ import { AuthService } from '../../services/auth.service';
               aria-label="Dismiss notification"
               title="Dismiss"
             >
-              ✕
+              &times;
             </button>
           </div>
         </div>
@@ -68,7 +68,7 @@ import { AuthService } from '../../services/auth.service';
               class="btn-admin-add"
               (click)="notificationService.openAddModal.set(true)"
             >
-              + Add Notification
+              Add Notification
             </button>
           </div>
         </div>
@@ -84,7 +84,7 @@ import { AuthService } from '../../services/auth.service';
               <span class="modal-sub">Border Operations</span>
               <h3 class="modal-title">Broadcast Notification</h3>
             </div>
-            <button type="button" class="btn-close" (click)="notificationService.openAddModal.set(false)">✕</button>
+            <button type="button" class="btn-close" (click)="notificationService.openAddModal.set(false)">&times;</button>
           </div>
 
           <form (ngSubmit)="sendNotification()" class="modal-form">

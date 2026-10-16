@@ -131,7 +131,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   title="Edit sections, titles, and curriculum content"
                 >
                   <app-icon name="edit" [size]="16" />
-                  ✏️ Edit Content
+                  Edit Content
                 </button>
                 <button
                   type="button"
@@ -139,7 +139,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   (click)="notificationService.openAddModal.set(true)"
                   title="Broadcast notification to all users"
                 >
-                  📢 Add Notification
+                  Add Notification
                 </button>
               </div>
             }
@@ -228,7 +228,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                       (click)="openDirectEdit(sub)"
                                       title="Edit this section directly from main page"
                                     >
-                                      ✏️ Edit Section
+                                      Edit Section
                                     </button>
                                   }
                                 </div>
@@ -323,7 +323,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                       (click)="openDirectEdit(sub)"
                                       title="Edit this section directly from main page"
                                     >
-                                      ✏️ Edit Section
+                                      Edit Section
                                     </button>
                                   }
                                 </div>
@@ -360,7 +360,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <span class="modal-sub">Curriculum Editor</span>
                 <h3 class="modal-title">Edit Manual Content</h3>
               </div>
-              <button type="button" class="btn-close" (click)="editModalOpen.set(false)">✕</button>
+              <button type="button" class="btn-close" (click)="editModalOpen.set(false)">&times;</button>
             </div>
 
             <!-- Editor Navigation Tabs -->
@@ -371,7 +371,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 [class.active]="editTab() === 'edit'"
                 (click)="editTab.set('edit')"
               >
-                ✏️ Edit Form
+                Edit Form
               </button>
               <button
                 type="button"
@@ -379,7 +379,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 [class.active]="editTab() === 'preview'"
                 (click)="editTab.set('preview')"
               >
-                👁️ Live Page Preview
+                Live Page Preview
               </button>
             </div>
 
@@ -422,7 +422,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   <div class="image-uploader-card">
                     <div class="image-uploader-controls">
                       <label class="btn-upload-file">
-                        📁 Choose Image File
+                        Choose Image File
                         <input
                           type="file"
                           accept="image/*"
@@ -445,7 +445,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           (click)="removeImage()"
                           title="Remove custom image"
                         >
-                          ✕ Remove
+                          Remove
                         </button>
                       }
                     </div>
@@ -454,7 +454,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       <div class="img-preview-box">
                         <img [src]="editImageUrl" alt="Section Image Preview" class="img-thumb" />
                         <div class="img-preview-meta">
-                          <span class="badge-success">✓ Image Attached</span>
+                          <span class="badge-success">Image Attached</span>
                           <span class="img-preview-hint">
                             This image will appear on the section page and in card previews.
                           </span>
@@ -462,7 +462,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       </div>
                     } @else {
                       <div class="img-empty-box">
-                        <span>📷 No custom image selected (default topic illustration placeholder will be used)</span>
+                        <span>No custom image selected (default topic illustration placeholder will be used)</span>
                       </div>
                     }
                   </div>
@@ -520,7 +520,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     [disabled]="!editTitle.trim()"
                     title="Preview exact page display before publishing live"
                   >
-                    👁️ Preview Page
+                    Preview Page
                   </button>
                   <button
                     type="button"
@@ -536,13 +536,13 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <div class="live-preview-container">
                   <div class="preview-notice-bar">
                     <div style="display: flex; align-items: center; gap: 0.6rem;">
-                      <span class="preview-badge-live">LIVE PREVIEW</span>
+                      <span class="preview-badge-live">Preview Mode</span>
                       <span style="font-size: 0.88rem; color: #334155; font-weight: 600;">
                         How this page will appear to readers before publishing:
                       </span>
                     </div>
                     <button type="button" class="btn-back-to-edit" (click)="editTab.set('edit')">
-                      ← Back to Editing
+                      Back to Editing
                     </button>
                   </div>
 
@@ -607,7 +607,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                   <div class="modal-actions" style="margin-top: 1.2rem;">
                     <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
-                      ← Back to Edit Form
+                      Back to Edit Form
                     </button>
                     <button
                       type="button"
@@ -615,7 +615,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       [disabled]="savingEdit() || !editTitle.trim()"
                       (click)="handleSaveContentEdit()"
                     >
-                      {{ savingEdit() ? 'Publishing...' : '🚀 Save & Publish Live' }}
+                      {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
                     </button>
                   </div>
                 </div>
@@ -1320,7 +1320,7 @@ export class HomeComponent implements OnInit {
         imageUrl: this.editImageUrl,
       });
 
-      this.editSuccessMsg.set('✓ Content successfully saved and updated in database!');
+      this.editSuccessMsg.set('Content successfully saved and updated in database.');
 
       // Update local preview snippet & image immediately so cards reflect updated text & image
       this.previewTexts.update((p) => ({
