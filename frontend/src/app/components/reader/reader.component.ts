@@ -44,99 +44,23 @@ import { IconComponent } from '../icon/icon.component';
     } @else {
       @let art = article()!;
       <div>
-        <!-- Top Bar with Back Button and Admin Edit Trigger -->
+        <!-- Top Bar with Back Button -->
         <header class="pbar">
           <button type="button" class="back" (click)="goBack()">
             <app-icon name="left" [size]="20" />
             Back
           </button>
-
-          @if (authService.isAdmin()) {
-            <button
-              type="button"
-              class="btn btn-secondary"
-              style="font-size: 0.85rem; padding: 0.35rem 0.8rem;"
-              (click)="isEditing.set(!isEditing())"
-            >
-              {{ isEditing() ? 'Cancel Edit' : 'Edit Section (Admin)' }}
-            </button>
-          }
         </header>
 
         <!-- Main Article Page -->
         <article class="page">
           <p class="crumb">{{ art.sectionTitle }} › {{ art.topicTitle }}</p>
 
-          <h1>{{ art.title }}</h1>
+          <h1 style="margin: 0.2rem 0 0.5rem; line-height: 1.15;">{{ art.title }}</h1>
           <p class="ref">Official OSBP Manual Section • {{ art.wordCount }} words</p>
 
-          <!-- Admin Quick Inline Editor -->
-          @if (isEditing()) {
-            <div
-              style="padding: 1.4rem; border-radius: 8px; border: 2px solid var(--blue); background: #fff; margin-bottom: 2rem;"
-            >
-              <h3 style="margin: 0 0 1rem; font-size: 1.15rem;">Edit Section Content</h3>
-              <div style="margin-bottom: 1rem;">
-                <label
-                  style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;"
-                >
-                  Section Title:
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="editTitle"
-                  style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 6px; font: inherit;"
-                />
-              </div>
-
-              <div style="margin-bottom: 1rem;">
-                <label
-                  style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;"
-                >
-                  Card Overview & Snippet (Managed from Backend):
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="editOverview"
-                  placeholder="Concise 1-sentence summary displayed on topic cards"
-                  style="width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--line); border-radius: 6px; font: inherit;"
-                />
-              </div>
-
-              <div style="margin-bottom: 1.2rem;">
-                <label
-                  style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.3rem;"
-                >
-                  Legal Text Content:
-                </label>
-                <textarea
-                  rows="12"
-                  [(ngModel)]="editContent"
-                  style="width: 100%; padding: 0.8rem; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 0.95rem; line-height: 1.5;"
-                ></textarea>
-              </div>
-
-              <div style="display: flex; gap: 0.8rem;">
-                <button
-                  type="button"
-                  class="btn"
-                  [disabled]="saving()"
-                  (click)="handleSaveEdit()"
-                >
-                  {{ saving() ? 'Saving...' : 'Save & Sync Search Index' }}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  (click)="isEditing.set(false)"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          } @else {
-            <!-- Content Blocks: Alternating image placeholders and text -->
-            <div class="blocks-container">
+          <!-- Content Blocks: Alternating image placeholders and text -->
+          <div class="blocks-container">
               @for (block of art.content; track $index; let idx = $index) {
                 @if (block.type === 'heading') {
                   <h2 [attr.id]="'sec-' + idx">{{ block.text }}</h2>
@@ -203,7 +127,6 @@ import { IconComponent } from '../icon/icon.component';
                 }
               }
             </div>
-          }
 
           <!-- Previous and Next Navigation Buttons -->
           <nav class="pn" aria-label="Other sections">
@@ -338,6 +261,24 @@ export class ReaderComponent implements OnInit, OnDestroy {
       alert(err instanceof Error ? err.message : 'Failed to save edit.');
     } finally {
       this.saving.set(false);
+    }
+  }
+
+  toggleEdit() {
+    if (this.authService.isAdmin()) {
+      this.isEditing.update((v) => !v);
+      if (this.isEditing()) {
+        setTimeout(() => {
+          const editor = document.getElementById('section-inline-editor');
+          if (editor) {
+            editor.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 50);
+      }
+    } else {
+      alert(
+        'Admin privileges are required to modify official manual content.\n\nPlease log in as an administrator (e.g. admin@osbp.com / Password: Admin@1234).',
+      );
     }
   }
 

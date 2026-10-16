@@ -29,7 +29,8 @@ public class DataSeeder {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             TopicRepository topicRepository,
-            TikaExtractionService tikaExtractionService) {
+            TikaExtractionService tikaExtractionService,
+            com.osbp.backend.modules.notification.repositories.NotificationRepository notificationRepository) {
         return args -> {
             // 1. Seed Accounts
             seedUserIfNotExists(userRepository, passwordEncoder, "admin@osbp.com", "Admin@1234", Role.ADMIN);
@@ -38,7 +39,18 @@ public class DataSeeder {
             seedUserIfNotExists(userRepository, passwordEncoder, "officer.namanga@eac.int", "Officer@1234", Role.USER);
             seedUserIfNotExists(userRepository, passwordEncoder, "trainee.mwangi@eac.int", "Trainee@1234", Role.USER);
 
-            // 2. Seed and Digitize Manual if database has 0 topics
+            // 2. Seed Initial Operational Broadcast if empty
+            if (notificationRepository.count() == 0) {
+                notificationRepository.save(new com.osbp.backend.modules.notification.models.Notification(
+                        "Namanga & Holili OSBP Operational Directives",
+                        "Priority lane 2 designated for fast-track clearance of EAC electronic Machine-Readable Travel Documents (e-MRTDs). Ensure secondary inspection protocols adhere to Topic 3.",
+                        "INFO",
+                        "EAC Secretariat"
+                ));
+                log.info("✅ Seeded initial operational bulletin notification.");
+            }
+
+            // 3. Seed and Digitize Manual if database has 0 topics
             if (topicRepository.count() == 0) {
                 File pdfFile = findManualPdf();
                 if (pdfFile != null && pdfFile.exists()) {
