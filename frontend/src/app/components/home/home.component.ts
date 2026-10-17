@@ -61,6 +61,10 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               <strong>Move between pages.</strong> At the bottom of each page, use <em>Previous</em>
               and <em>Next</em>. Use <em>Back</em> at the top to return to where you were.
             </li>
+            <li>
+              <strong>Search.</strong> Use the search bar below to look for a word or phrase and jump
+              straight to the right page.
+            </li>
           </ol>
 
           <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1.2rem;">
