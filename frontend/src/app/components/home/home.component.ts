@@ -681,14 +681,6 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                         Arrange your page paragraphs and images. For each image, you can choose left or right text alignment.
                       </p>
                     </div>
-                    <div class="content-blocks-actions">
-                      <button type="button" class="btn-add-block" (click)="addEditBlock('paragraph')">
-                        + Add Text Paragraph
-                      </button>
-                      <button type="button" class="btn-add-block" (click)="addEditBlock('media-text')">
-                        + Add Image & Text Block
-                      </button>
-                    </div>
                   </div>
 
                   <!-- List of Editable Blocks -->
@@ -697,7 +689,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       <div class="block-header">
                         <div style="display: flex; align-items: center; gap: 0.6rem;">
                           <span class="block-badge" [class.badge-media]="blk.type === 'media-text'">
-                            {{ blk.type === 'media-text' ? '🖼️ Media + Text' : '📝 Paragraph' }}
+                            {{ blk.type === 'media-text' ? 'Media + Text' : 'Paragraph' }}
                           </span>
                           <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Block #{{ bIdx + 1 }}</span>
                         </div>
@@ -737,7 +729,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setEditBlockAlignment(bIdx, 'left')"
                             title="Image on the Left, Text on the Right"
                           >
-                            🖼️ Image Left | Text Right 📝
+                            Image Left | Text Right
                           </button>
                           <button
                             type="button"
@@ -746,7 +738,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setEditBlockAlignment(bIdx, 'right')"
                             title="Text on the Left, Image on the Right"
                           >
-                            📝 Text Left | Image Right 🖼️
+                            Text Left | Image Right
                           </button>
                           <button
                             type="button"
@@ -755,7 +747,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setEditBlockAlignment(bIdx, 'full')"
                             title="Full width image with text below"
                           >
-                            🔲 Full Width
+                            Full Width
                           </button>
                         </div>
 
@@ -1357,9 +1349,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       <div class="block-card-header">
                         <span class="block-card-title">
                           @if (blk.type === 'media-text') {
-                            🖼️ Image & Text Block #{{ bIdx + 1 }}
+                            Image & Text Block #{{ bIdx + 1 }}
                           } @else {
-                            📄 Text Paragraph #{{ bIdx + 1 }}
+                            Text Paragraph #{{ bIdx + 1 }}
                           }
                         </span>
                         <div class="block-card-actions">
@@ -1398,7 +1390,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setNewPageBlockAlignment(bIdx, 'left')"
                             title="Image on the Left, Text on the Right"
                           >
-                            🖼️ Image Left | Text Right 📝
+                            Image Left | Text Right
                           </button>
                           <button
                             type="button"
@@ -1407,7 +1399,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setNewPageBlockAlignment(bIdx, 'right')"
                             title="Text on the Left, Image on the Right"
                           >
-                            📝 Text Left | Image Right 🖼️
+                            Text Left | Image Right
                           </button>
                           <button
                             type="button"
@@ -1416,7 +1408,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             (click)="setNewPageBlockAlignment(bIdx, 'full')"
                             title="Full width image with text below"
                           >
-                            🔲 Full Width
+                            Full Width
                           </button>
                         </div>
 
