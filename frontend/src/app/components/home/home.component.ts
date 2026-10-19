@@ -2544,11 +2544,33 @@ export class HomeComponent implements OnInit {
     if (!text || !text.trim()) {
       return `Standard operating guidance for ${title}.`;
     }
-    const clean = text.replace(/\s+/g, ' ').trim();
+    // 1. Strip custom media tags [media:...] and markdown images ![alt](url)
+    let clean = text
+      .replace(/\[media:(?:left|right|full)\|[^\]]+\]/gi, '')
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
+
+    // 2. Strip HTML tags (e.g. <p>, <b>, <table>, <tr>, <td>, etc.)
+    clean = clean.replace(/<[^>]+>/g, ' ');
+
+    // 3. Decode common HTML entities
+    clean = clean
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#039;/gi, "'");
+
+    // 4. Normalize whitespace
+    clean = clean.replace(/\s+/g, ' ').trim();
+    if (!clean) {
+      return `Standard operating guidance for ${title}.`;
+    }
+
     const firstSentenceMatch = clean.match(/^([^.!?]+[.!?])/);
     let snippet = firstSentenceMatch ? firstSentenceMatch[1].trim() : clean;
-    if (snippet.length > 100) {
-      snippet = snippet.substring(0, 97).trim() + '...';
+    if (snippet.length > 130) {
+      snippet = snippet.substring(0, 127).trim() + '...';
     }
     return snippet;
   }
@@ -2562,10 +2584,11 @@ export class HomeComponent implements OnInit {
 
     if (!this.previewTexts()[sub.id]) {
       if (sub.overview && sub.overview.trim()) {
+        const cleanOverview = sub.overview.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         const snippet =
-          sub.overview.length > 100
-            ? sub.overview.substring(0, 97).trim() + '...'
-            : sub.overview.trim();
+          cleanOverview.length > 130
+            ? cleanOverview.substring(0, 127).trim() + '...'
+            : cleanOverview;
         this.previewTexts.update((p) => ({ ...p, [sub.id]: snippet }));
         return;
       }
@@ -2575,12 +2598,13 @@ export class HomeComponent implements OnInit {
         const article = await this.manualService.fetchArticle(sub.id);
         let excerpt: string;
         if (article.overview && article.overview.trim()) {
+          const cleanArtOverview = article.overview.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
           excerpt =
-            article.overview.length > 100
-              ? article.overview.substring(0, 97).trim() + '...'
-              : article.overview.trim();
+            cleanArtOverview.length > 130
+              ? cleanArtOverview.substring(0, 127).trim() + '...'
+              : cleanArtOverview;
         } else {
-          const para = article.content.find((b) => b.type === 'paragraph')?.text;
+          const para = article.content.find((b) => b.type === 'paragraph' || b.type === 'media-text')?.text;
           excerpt = this.formatSnippet(para, sub.title);
         }
         this.previewTexts.update((p) => ({ ...p, [sub.id]: excerpt }));
@@ -3057,9 +3081,10 @@ export class HomeComponent implements OnInit {
       this.editSuccessMsg.set('Content successfully saved and updated in database.');
 
       // Update local preview snippet & image immediately so cards reflect updated text & image
+      const cleanSavedOverview = this.editOverview.trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       this.previewTexts.update((p) => ({
         ...p,
-        [subId]: this.editOverview.trim() || this.formatSnippet(this.editContentText, this.editTitle),
+        [subId]: cleanSavedOverview || this.formatSnippet(this.editContentText, this.editTitle),
       }));
       this.previewImages.update((p) => ({
         ...p,
