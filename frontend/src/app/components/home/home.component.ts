@@ -158,15 +158,25 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                       <h2 class="c-title" style="margin: 0;">{{ section.title }}</h2>
                       @if (authService.isAdmin()) {
-                        <button
-                          type="button"
-                          class="btn-edit-module"
-                          (click)="openModuleEditor(section)"
-                          title="Edit this module's title and illustration image"
-                        >
-                          <app-icon name="edit" [size]="13" />
-                          Edit Module
-                        </button>
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+                          <button
+                            type="button"
+                            class="btn-edit-module"
+                            (click)="openModuleEditor(section)"
+                            title="Edit this module's title and illustration image"
+                          >
+                            <app-icon name="edit" [size]="13" />
+                            Edit Module
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-delete-module"
+                            (click)="confirmDeleteModule(section)"
+                            title="Delete this module and all its pages"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       }
                     </div>
                     <span class="c-meta">
@@ -310,15 +320,25 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                       <h2 class="c-title" style="margin: 0;">{{ sec.title }}</h2>
                       @if (authService.isAdmin()) {
-                        <button
-                          type="button"
-                          class="btn-edit-module"
-                          (click)="openModuleEditor(sec)"
-                          title="Edit this module's title and illustration image"
-                        >
-                          <app-icon name="edit" [size]="13" />
-                          Edit Module
-                        </button>
+                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+                          <button
+                            type="button"
+                            class="btn-edit-module"
+                            (click)="openModuleEditor(sec)"
+                            title="Edit this module's title and illustration image"
+                          >
+                            <app-icon name="edit" [size]="13" />
+                            Edit Module
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-delete-module"
+                            (click)="confirmDeleteModule(sec)"
+                            title="Delete this module and all its pages"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       }
                     </div>
                     <span class="c-meta">{{ getAllSubtopics(sec).length }} Resources</span>
@@ -814,23 +834,34 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               </div>
 
               <!-- Actions -->
-              <div class="modal-actions" style="margin-top: 1.5rem;">
+              <div class="modal-actions" style="justify-content: space-between; margin-top: 1.5rem;">
                 <button
                   type="button"
-                  class="btn-cancel"
-                  [disabled]="savingModule()"
-                  (click)="closeModuleEditor()"
+                  class="btn-delete"
+                  [disabled]="deletingModule() || savingModule()"
+                  (click)="confirmDeleteModule(mod)"
+                  title="Delete this module and all its pages"
                 >
-                  Cancel
+                  {{ deletingModule() ? 'Deleting...' : 'Delete Module' }}
                 </button>
-                <button
-                  type="button"
-                  class="btn-save"
-                  [disabled]="savingModule() || !editModuleTitle.trim()"
-                  (click)="handleSaveModuleEdit()"
-                >
-                  {{ savingModule() ? 'Saving...' : 'Save Module Changes' }}
-                </button>
+                <div style="display: flex; gap: 0.8rem;">
+                  <button
+                    type="button"
+                    class="btn-cancel"
+                    [disabled]="savingModule() || deletingModule()"
+                    (click)="closeModuleEditor()"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-save"
+                    [disabled]="savingModule() || !editModuleTitle.trim() || deletingModule()"
+                    (click)="handleSaveModuleEdit()"
+                  >
+                    {{ savingModule() ? 'Saving...' : 'Save Module Changes' }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1318,6 +1349,26 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         border-color: #e5a414;
         color: #1a1a1a;
       }
+      .btn-delete-module {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #fff;
+        border: 1px solid #fca5a5;
+        border-radius: 5px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #dc2626;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-delete-module:hover {
+        background: #fef2f2;
+        border-color: #ef4444;
+      }
     `,
   ],
 })
@@ -1352,6 +1403,7 @@ export class HomeComponent implements OnInit {
   editModuleTitle = '';
   editModuleImageUrl = '';
   savingModule = signal(false);
+  deletingModule = signal(false);
   moduleSuccessMsg = signal('');
   moduleErrorMsg = signal('');
 
@@ -1734,6 +1786,45 @@ export class HomeComponent implements OnInit {
       );
     } finally {
       this.savingModule.set(false);
+    }
+  }
+
+  async confirmDeleteModule(sec: Section) {
+    if (!sec.rawId) {
+      alert('Cannot delete this module because its database ID is missing.');
+      return;
+    }
+
+    const subtopicsCount = this.getAllSubtopics(sec).length;
+    const pageWord = subtopicsCount === 1 ? 'page' : 'pages';
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${sec.title}"?\n\n` +
+      `⚠️ WARNING: This module contains ${subtopicsCount} ${pageWord}/items. ` +
+      `If you delete this module, all ${subtopicsCount} of its ${pageWord} and items will also be permanently deleted from the manual!\n\n` +
+      `Do you want to proceed with deleting this module?`
+    );
+
+    if (!confirmed) return;
+
+    await this.executeDeleteModule(sec.rawId, sec.title);
+  }
+
+  async executeDeleteModule(topicId: number, title: string) {
+    this.deletingModule.set(true);
+    this.moduleErrorMsg.set('');
+    try {
+      await this.manualService.deleteTopic(topicId);
+      if (this.moduleModalOpen()) {
+        this.closeModuleEditor();
+      }
+      await this.loadTree();
+      alert(`Module "${title}" and all its pages have been successfully deleted.`);
+    } catch (err: any) {
+      this.moduleErrorMsg.set(err?.message || 'Failed to delete module.');
+      alert(err?.message || 'Failed to delete module.');
+    } finally {
+      this.deletingModule.set(false);
     }
   }
 }

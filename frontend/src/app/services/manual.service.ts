@@ -606,6 +606,13 @@ export class ManualService {
     return { ok: true };
   }
 
+  async deleteTopic(id: number): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.delete(`${API_BASE_URL}/admin/topics/${id}`),
+    );
+    return { ok: true };
+  }
+
   async deleteSection(id: string): Promise<{ ok: boolean }> {
     await firstValueFrom(
       this.http.delete(`${API_BASE_URL}/admin/sections/${id}`),
