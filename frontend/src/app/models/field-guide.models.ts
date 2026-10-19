@@ -37,6 +37,7 @@ export interface SubTopic {
   wordCount?: number;
   overview?: string;
   imageUrl?: string;
+  orderIndex?: number;
   children?: SubTopic[];
 }
 

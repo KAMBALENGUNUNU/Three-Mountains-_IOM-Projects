@@ -25,6 +25,7 @@ import com.osbp.backend.modules.manual.repositories.SubTopicRepository;
 import com.osbp.backend.modules.manual.repositories.TopicRepository;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Admin-only REST controller for PDF ingestion and manual content management.
@@ -204,6 +205,26 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Void>> deleteSubTopic(@PathVariable Long id) {
         manualService.deleteSubTopic(id);
         return ResponseEntity.ok(ApiResponse.ok("SubTopic deleted successfully", null));
+    }
+
+    @Operation(
+            summary = "Reorder topics (sections on main page)",
+            description = "ADMIN only. Updates topic numbers based on the ordered list of topic IDs."
+    )
+    @PutMapping("/topics/reorder")
+    public ResponseEntity<ApiResponse<Void>> reorderTopics(@RequestBody List<Long> topicIds) {
+        manualService.reorderTopics(topicIds);
+        return ResponseEntity.ok(ApiResponse.ok("Topics reordered successfully", null));
+    }
+
+    @Operation(
+            summary = "Reorder sections (pages)",
+            description = "ADMIN only. Updates section order indices based on the ordered list of section IDs."
+    )
+    @PutMapping("/sections/reorder")
+    public ResponseEntity<ApiResponse<Void>> reorderSections(@RequestBody List<Long> sectionIds) {
+        manualService.reorderSections(sectionIds);
+        return ResponseEntity.ok(ApiResponse.ok("Sections reordered successfully", null));
     }
 
     // ------------------------------------------------------------------ //

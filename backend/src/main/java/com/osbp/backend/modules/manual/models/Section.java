@@ -37,6 +37,9 @@ public class Section {
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
+    @Column(name = "order_index")
+    private Integer orderIndex;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sub_topic_id", nullable = false)
     private SubTopic subTopic;
@@ -72,11 +75,13 @@ public class Section {
     public String getContent()    { return content; }
     public String getOverview()   { return overview; }
     public String getImageUrl()   { return imageUrl; }
+    public Integer getOrderIndex(){ return orderIndex; }
     public SubTopic getSubTopic() { return subTopic; }
 
     public void setTitle(String title)       { this.title = title; }
     public void setContent(String content)   { this.content = content; }
     public void setOverview(String overview) { this.overview = overview; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
     public void setSubTopic(SubTopic subTopic) { this.subTopic = subTopic; }
 }

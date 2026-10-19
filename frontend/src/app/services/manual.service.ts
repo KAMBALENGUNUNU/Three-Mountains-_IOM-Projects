@@ -26,6 +26,7 @@ interface BackendSection {
   content: string;
   overview?: string;
   imageUrl?: string;
+  orderIndex?: number;
 }
 
 interface BackendSubTopic {
@@ -149,7 +150,8 @@ export class ManualService {
             id: String(sec.id),
             title: cleanTitle,
             slug: this.slugify(cleanTitle),
-            order: secIdx + 1,
+            order: sec.orderIndex ?? (secIdx + 1),
+            orderIndex: sec.orderIndex,
             pageCount: pageSpan + 1,
             startPage: startP,
             endPage: endP,
@@ -621,7 +623,28 @@ export class ManualService {
     await firstValueFrom(
       this.http.delete(`${API_BASE_URL}/admin/sections/${id}`),
     );
+    this.cachedTree = null;
     return { ok: true };
+  }
+
+  async reorderTopics(topicIds: number[]): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.put(`${API_BASE_URL}/admin/topics/reorder`, topicIds),
+    );
+    this.cachedTree = null;
+    return { ok: true };
+  }
+
+  async reorderSections(sectionIds: number[]): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.put(`${API_BASE_URL}/admin/sections/reorder`, sectionIds),
+    );
+    this.cachedTree = null;
+    return { ok: true };
+  }
+
+  clearCache(): void {
+    this.cachedTree = null;
   }
 
   async rebuildIndex(): Promise<{ ok: boolean; pages: number }> {

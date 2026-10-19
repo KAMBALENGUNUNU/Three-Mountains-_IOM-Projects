@@ -35,6 +35,7 @@ public class SubTopic {
     private Topic topic;
 
     @OneToMany(mappedBy = "subTopic", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("orderIndex ASC, id ASC")
     private List<Section> sections = new ArrayList<>();
 
     // ------------------------------------------------------------------ //

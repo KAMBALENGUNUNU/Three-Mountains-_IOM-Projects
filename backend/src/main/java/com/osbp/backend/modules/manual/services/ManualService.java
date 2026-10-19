@@ -81,4 +81,18 @@ public interface ManualService {
      * @param id the subtopic ID
      */
     void deleteSubTopic(Long id);
+
+    /**
+     * Reorders topics by assigning new sequential topicNumbers according to the provided topic ID order.
+     *
+     * @param topicIds list of topic IDs in their desired order
+     */
+    void reorderTopics(java.util.List<Long> topicIds);
+
+    /**
+     * Reorders sections (pages) by assigning sequential orderIndex according to the provided section ID order.
+     *
+     * @param sectionIds list of section IDs in their desired order
+     */
+    void reorderSections(java.util.List<Long> sectionIds);
 }

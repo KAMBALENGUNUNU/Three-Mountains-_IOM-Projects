@@ -138,8 +138,15 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
           </div>
 
           <ol class="cards">
-            @for (section of coreModules(); track section.id) {
-              <li class="card {{ getTintClass(section.order) }}" [attr.data-topic]="section.order">
+            @for (section of coreModules(); track section.id; let secIdx = $index) {
+              <li
+                class="card {{ getTintClass(section.order) }}"
+                [attr.data-topic]="section.order"
+                [attr.draggable]="authService.isAdmin()"
+                (dragstart)="onSectionDragStart($event, secIdx)"
+                (dragover)="onSectionDragOver($event)"
+                (drop)="onSectionDrop($event, secIdx)"
+              >
                 <!-- Header -->
                 <div class="c-head">
                   <div class="c-img" role="img" aria-label="Section illustration">
@@ -158,7 +165,23 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
                       <h2 class="c-title" style="margin: 0;">{{ section.title }}</h2>
                       @if (authService.isAdmin()) {
-                        <div style="display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0;">
+                        <div style="display: flex; gap: 0.35rem; align-items: center; flex-shrink: 0; flex-wrap: wrap;">
+                          <div class="reorder-btn-group" title="Move section up or down">
+                            <button
+                              type="button"
+                              class="btn-reorder"
+                              [disabled]="secIdx === 0 || reorderingSection()"
+                              (click)="moveSection(secIdx, -1); $event.stopPropagation()"
+                              title="Move section up"
+                            >▲</button>
+                            <button
+                              type="button"
+                              class="btn-reorder"
+                              [disabled]="secIdx === coreModules().length - 1 || reorderingSection()"
+                              (click)="moveSection(secIdx, 1); $event.stopPropagation()"
+                              title="Move section down"
+                            >▼</button>
+                          </div>
                           <button
                             type="button"
                             class="btn-edit-module"
@@ -205,17 +228,43 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                   <ul class="c-list" [attr.id]="'subs-' + section.order">
                     @for (sub of getAllSubtopics(section); track sub.id; let sIdx = $index) {
-                      <li class="c-sub">
-                        <button
-                          type="button"
-                          class="c-sbtn"
-                          (click)="toggleSubtopic(sub)"
-                          [attr.aria-expanded]="activeSubtopicId() === sub.id"
-                        >
-                          <app-icon name="book" [size]="16" />
-                          <span class="c-stitle">{{ sub.title }}</span>
-                          <app-icon name="chev" [size]="18" customClass="chev" />
-                        </button>
+                      <li
+                        class="c-sub"
+                        [attr.draggable]="authService.isAdmin()"
+                        (dragstart)="onPageDragStart($event, section, sIdx)"
+                        (dragover)="onPageDragOver($event)"
+                        (drop)="onPageDrop($event, section, sIdx)"
+                      >
+                        <div class="c-sub-row">
+                          @if (authService.isAdmin()) {
+                            <div class="reorder-page-group" (click)="$event.stopPropagation()">
+                              <button
+                                type="button"
+                                class="btn-reorder-page"
+                                [disabled]="sIdx === 0 || reorderingPage()"
+                                (click)="movePage(section, sIdx, -1)"
+                                title="Move page up"
+                              >▲</button>
+                              <button
+                                type="button"
+                                class="btn-reorder-page"
+                                [disabled]="sIdx === getAllSubtopics(section).length - 1 || reorderingPage()"
+                                (click)="movePage(section, sIdx, 1)"
+                                title="Move page down"
+                              >▼</button>
+                            </div>
+                          }
+                          <button
+                            type="button"
+                            class="c-sbtn"
+                            (click)="toggleSubtopic(sub)"
+                            [attr.aria-expanded]="activeSubtopicId() === sub.id"
+                          >
+                            <app-icon name="book" [size]="16" />
+                            <span class="c-stitle">{{ sub.title }}</span>
+                            <app-icon name="chev" [size]="18" customClass="chev" />
+                          </button>
+                        </div>
 
                         <!-- Accordion Content Panel (with image placeholder & preview) -->
                         @if (activeSubtopicId() === sub.id) {
@@ -363,17 +412,43 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                   <ul class="c-list" [attr.id]="'subs-' + sec.order">
                     @for (sub of getAllSubtopics(sec); track sub.id; let sIdx = $index) {
-                      <li class="c-sub">
-                        <button
-                          type="button"
-                          class="c-sbtn"
-                          (click)="toggleSubtopic(sub)"
-                          [attr.aria-expanded]="activeSubtopicId() === sub.id"
-                        >
-                          <app-icon name="book" [size]="16" />
-                          <span class="c-stitle">{{ sub.title }}</span>
-                          <app-icon name="chev" [size]="18" customClass="chev" />
-                        </button>
+                      <li
+                        class="c-sub"
+                        [attr.draggable]="authService.isAdmin()"
+                        (dragstart)="onPageDragStart($event, sec, sIdx)"
+                        (dragover)="onPageDragOver($event)"
+                        (drop)="onPageDrop($event, sec, sIdx)"
+                      >
+                        <div class="c-sub-row">
+                          @if (authService.isAdmin()) {
+                            <div class="reorder-page-group" (click)="$event.stopPropagation()">
+                              <button
+                                type="button"
+                                class="btn-reorder-page"
+                                [disabled]="sIdx === 0 || reorderingPage()"
+                                (click)="movePage(sec, sIdx, -1)"
+                                title="Move page up"
+                              >▲</button>
+                              <button
+                                type="button"
+                                class="btn-reorder-page"
+                                [disabled]="sIdx === getAllSubtopics(sec).length - 1 || reorderingPage()"
+                                (click)="movePage(sec, sIdx, 1)"
+                                title="Move page down"
+                              >▼</button>
+                            </div>
+                          }
+                          <button
+                            type="button"
+                            class="c-sbtn"
+                            (click)="toggleSubtopic(sub)"
+                            [attr.aria-expanded]="activeSubtopicId() === sub.id"
+                          >
+                            <app-icon name="book" [size]="16" />
+                            <span class="c-stitle">{{ sub.title }}</span>
+                            <app-icon name="chev" [size]="18" customClass="chev" />
+                          </button>
+                        </div>
 
                         @if (activeSubtopicId() === sub.id) {
                           <div>
@@ -1369,6 +1444,89 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         background: #fef2f2;
         border-color: #ef4444;
       }
+      .reorder-btn-group {
+        display: inline-flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+      .btn-reorder {
+        background: transparent;
+        border: none;
+        padding: 0.35rem 0.55rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #475569;
+        cursor: pointer;
+        line-height: 1;
+        transition: background 0.15s, color 0.15s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-reorder:not(:last-child) {
+        border-right: 1px solid #cbd5e1;
+      }
+      .btn-reorder:hover:not(:disabled) {
+        background: #FFB81C;
+        color: #1a1a1a;
+      }
+      .btn-reorder:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      .c-sub-row {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 0.4rem;
+      }
+      .c-sub-row .c-sbtn {
+        flex: 1;
+      }
+      .reorder-page-group {
+        display: inline-flex;
+        align-items: center;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .btn-reorder-page {
+        background: transparent;
+        border: none;
+        padding: 0.28rem 0.42rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #475569;
+        cursor: pointer;
+        line-height: 1;
+        transition: background 0.15s, color 0.15s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-reorder-page:not(:last-child) {
+        border-right: 1px solid #cbd5e1;
+      }
+      .btn-reorder-page:hover:not(:disabled) {
+        background: #FFB81C;
+        color: #1a1a1a;
+      }
+      .btn-reorder-page:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+      }
+      .card[draggable="true"] {
+        cursor: grab;
+      }
+      .c-sub[draggable="true"] {
+        cursor: grab;
+      }
     `,
   ],
 })
@@ -1406,6 +1564,12 @@ export class HomeComponent implements OnInit {
   deletingModule = signal(false);
   moduleSuccessMsg = signal('');
   moduleErrorMsg = signal('');
+
+  // Reordering State
+  reorderingSection = signal(false);
+  reorderingPage = signal(false);
+  draggedSectionIndex: number | null = null;
+  draggedPageInfo: { sectionId: string; pageIndex: number } | null = null;
 
   // Dropdown list computed from tree
   allSubtopicsList = computed(() => {
@@ -1530,7 +1694,164 @@ export class HomeComponent implements OnInit {
     sec.topics.forEach((top) => {
       top.subtopics.forEach((sub) => list.push(sub));
     });
+    list.sort((a, b) => ((a.orderIndex ?? a.order) - (b.orderIndex ?? b.order)));
     return list;
+  }
+
+  private updateSectionNumberInTitle(title: string, newNumber: number): string {
+    if (/^section\s*\d*[:.-]?\s*/i.test(title)) {
+      return title.replace(/^section\s*\d*[:.-]?\s*/i, `Section ${newNumber}: `);
+    }
+    if (/^module\s*\d*[:.-]?\s*/i.test(title)) {
+      return title.replace(/^module\s*\d*[:.-]?\s*/i, `Section ${newNumber}: `);
+    }
+    return `Section ${newNumber}: ${title}`;
+  }
+
+  async moveSection(fromIndex: number, direction: -1 | 1) {
+    const targetIndex = fromIndex + direction;
+    const modules = this.coreModules();
+    if (targetIndex < 0 || targetIndex >= modules.length) return;
+    await this.reorderSectionToIndex(fromIndex, targetIndex);
+  }
+
+  async reorderSectionToIndex(fromIndex: number, toIndex: number) {
+    const currentTree = this.tree();
+    if (!currentTree || this.reorderingSection()) return;
+
+    const coreList = [...this.coreModules()];
+    if (fromIndex < 0 || fromIndex >= coreList.length || toIndex < 0 || toIndex >= coreList.length) return;
+
+    const [moved] = coreList.splice(fromIndex, 1);
+    coreList.splice(toIndex, 0, moved);
+
+    // Optimistically renumber orders 1..N and update titles
+    coreList.forEach((sec, idx) => {
+      const newNum = idx + 1;
+      sec.order = newNum;
+      sec.title = this.updateSectionNumberInTitle(sec.title, newNum);
+    });
+
+    const nonCoreBefore = currentTree.sections.filter((s) => s.order === 0);
+    const nonCoreAfter = currentTree.sections.filter((s) => s.order > 8);
+    const updatedSections = [...nonCoreBefore, ...coreList, ...nonCoreAfter];
+    this.tree.set({ ...currentTree, sections: updatedSections });
+
+    const topicIds = coreList
+      .map((s) => s.rawId)
+      .filter((id): id is number => typeof id === 'number');
+
+    try {
+      this.reorderingSection.set(true);
+      await this.manualService.reorderTopics(topicIds);
+    } catch (err) {
+      console.error('Failed to save section order:', err);
+      await this.loadTree();
+    } finally {
+      this.reorderingSection.set(false);
+    }
+  }
+
+  onSectionDragStart(event: DragEvent, index: number) {
+    this.draggedSectionIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', `section:${index}`);
+    }
+  }
+
+  onSectionDragOver(event: DragEvent) {
+    if (this.draggedSectionIndex !== null) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+    }
+  }
+
+  async onSectionDrop(event: DragEvent, targetIndex: number) {
+    event.preventDefault();
+    if (this.draggedSectionIndex === null || this.draggedSectionIndex === targetIndex) {
+      this.draggedSectionIndex = null;
+      return;
+    }
+    const from = this.draggedSectionIndex;
+    this.draggedSectionIndex = null;
+    await this.reorderSectionToIndex(from, targetIndex);
+  }
+
+  async movePage(section: Section, fromIndex: number, direction: -1 | 1) {
+    const targetIndex = fromIndex + direction;
+    const pages = this.getAllSubtopics(section);
+    if (targetIndex < 0 || targetIndex >= pages.length) return;
+    await this.reorderPageToIndex(section, fromIndex, targetIndex);
+  }
+
+  async reorderPageToIndex(section: Section, fromIndex: number, toIndex: number) {
+    if (this.reorderingPage()) return;
+    const pages = [...this.getAllSubtopics(section)];
+    if (fromIndex < 0 || fromIndex >= pages.length || toIndex < 0 || toIndex >= pages.length) return;
+
+    const [moved] = pages.splice(fromIndex, 1);
+    pages.splice(toIndex, 0, moved);
+
+    // Update order numbers sequentially
+    pages.forEach((p, idx) => {
+      p.order = idx + 1;
+      p.orderIndex = idx + 1;
+    });
+
+    // Optimistically trigger tree change
+    const currentTree = this.tree();
+    if (currentTree) {
+      this.tree.set({ ...currentTree });
+    }
+
+    const sectionIds = pages
+      .map((p) => Number(p.id))
+      .filter((id) => !isNaN(id) && id > 0);
+
+    try {
+      this.reorderingPage.set(true);
+      await this.manualService.reorderSections(sectionIds);
+    } catch (err) {
+      console.error('Failed to save page order:', err);
+      await this.loadTree();
+    } finally {
+      this.reorderingPage.set(false);
+    }
+  }
+
+  onPageDragStart(event: DragEvent, section: Section, pageIndex: number) {
+    this.draggedPageInfo = { sectionId: section.id, pageIndex };
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', `page:${section.id}:${pageIndex}`);
+    }
+  }
+
+  onPageDragOver(event: DragEvent) {
+    if (this.draggedPageInfo !== null) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+    }
+  }
+
+  async onPageDrop(event: DragEvent, section: Section, targetIndex: number) {
+    event.preventDefault();
+    if (
+      !this.draggedPageInfo ||
+      this.draggedPageInfo.sectionId !== section.id ||
+      this.draggedPageInfo.pageIndex === targetIndex
+    ) {
+      this.draggedPageInfo = null;
+      return;
+    }
+    const from = this.draggedPageInfo.pageIndex;
+    this.draggedPageInfo = null;
+    await this.reorderPageToIndex(section, from, targetIndex);
   }
 
   getTintClass(order: number): string {

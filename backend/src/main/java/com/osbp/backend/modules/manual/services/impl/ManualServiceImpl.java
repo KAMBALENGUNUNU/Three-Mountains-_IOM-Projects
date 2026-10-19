@@ -15,6 +15,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -205,6 +206,34 @@ public class ManualServiceImpl implements ManualService {
         subTopicRepository.delete(subTopic);
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public void reorderTopics(List<Long> topicIds) {
+        if (topicIds == null || topicIds.isEmpty()) return;
+        for (int i = 0; i < topicIds.size(); i++) {
+            int order = i + 1;
+            topicRepository.findById(topicIds.get(i)).ifPresent(t -> {
+                t.setTopicNumber(order);
+                topicRepository.save(t);
+            });
+        }
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public void reorderSections(List<Long> sectionIds) {
+        if (sectionIds == null || sectionIds.isEmpty()) return;
+        for (int i = 0; i < sectionIds.size(); i++) {
+            int order = i + 1;
+            sectionRepository.findById(sectionIds.get(i)).ifPresent(s -> {
+                s.setOrderIndex(order);
+                sectionRepository.save(s);
+            });
+        }
+    }
+
     // ------------------------------------------------------------------ //
     //  Mapping helpers
     // ------------------------------------------------------------------ //
@@ -218,12 +247,14 @@ public class ManualServiceImpl implements ManualService {
 
     private SubTopicDTO toSubTopicDTO(SubTopic subTopic) {
         List<SectionDTO> sectionDTOs = subTopic.getSections().stream()
+                .sorted(Comparator.comparing((Section s) -> s.getOrderIndex() != null ? s.getOrderIndex() : 0)
+                        .thenComparing(Section::getId))
                 .map(this::toSectionDTO)
                 .toList();
         return new SubTopicDTO(subTopic.getId(), subTopic.getSubNumber(), subTopic.getTitle(), sectionDTOs);
     }
 
     private SectionDTO toSectionDTO(Section section) {
-        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview(), section.getImageUrl());
+        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview(), section.getImageUrl(), section.getOrderIndex());
     }
 }
