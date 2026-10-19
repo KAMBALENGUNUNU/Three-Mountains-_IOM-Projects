@@ -194,8 +194,16 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           </div>
                           <button
                             type="button"
+                            class="btn-add-page-direct"
+                            (click)="openAddPageModal(section); $event.stopPropagation()"
+                            title="Add a new page directly to {{ section.title }}"
+                          >
+                            + Add Page
+                          </button>
+                          <button
+                            type="button"
                             class="btn-edit-module"
-                            (click)="openModuleEditor(section)"
+                            (click)="openModuleEditor(section); $event.stopPropagation()"
                             title="Edit this section's title and illustration image"
                           >
                             <app-icon name="edit" [size]="13" />
@@ -204,7 +212,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           <button
                             type="button"
                             class="btn-delete-module"
-                            (click)="confirmDeleteModule(section)"
+                            (click)="confirmDeleteModule(section); $event.stopPropagation()"
                             title="Delete this section and all its pages"
                           >
                             Delete Section
@@ -222,9 +230,21 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <!-- Subtopics List (when card details is open) -->
                 @if (isTopicOpen(section.order.toString())) {
                   <div class="c-top-close-bar">
-                    <span class="c-top-close-count">
-                      {{ getAllSubtopics(section).length }} {{ getAllSubtopics(section).length === 1 ? 'Page' : 'Pages' }}
-                    </span>
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                      <span class="c-top-close-count">
+                        {{ getAllSubtopics(section).length }} {{ getAllSubtopics(section).length === 1 ? 'Page' : 'Pages' }}
+                      </span>
+                      @if (authService.isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn-add-page-inside"
+                          (click)="openAddPageModal(section); $event.stopPropagation()"
+                          title="Add a new page to this section"
+                        >
+                          + Add Page to Section
+                        </button>
+                      }
+                    </div>
                     <button
                       type="button"
                       class="btn-close-details"
@@ -2265,6 +2285,43 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       .btn-card-delete:hover {
         background: #fef2f2;
       }
+      .btn-add-page-direct {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #002244;
+        border: 1px solid #00143c;
+        border-radius: 5px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-add-page-direct:hover {
+        background: #FFB81C;
+        border-color: #e5a414;
+        color: #00143c;
+      }
+      .btn-add-page-inside {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        color: #166534;
+        padding: 0.3rem 0.75rem;
+        border-radius: 5px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+      }
+      .btn-add-page-inside:hover {
+        background: #dcfce7;
+        border-color: #4ade80;
+      }
       .btn-edit-module {
         display: inline-flex;
         align-items: center;
@@ -3287,7 +3344,7 @@ export class HomeComponent implements OnInit {
   //  Add Page Creator Methods
   // ------------------------------------------------------------------ //
 
-  openAddPageModal() {
+  openAddPageModal(targetSection?: Section) {
     this.addPageTab.set('edit');
     this.newPageTitle = '';
     this.newPageOverview = '';
@@ -3298,8 +3355,12 @@ export class HomeComponent implements OnInit {
     this.addPageSuccessMsg.set('');
 
     const sections = this.tree()?.sections || [];
-    const firstSection = sections.find((s) => typeof s.rawId === 'number');
-    this.newPageTopicId = firstSection ? (firstSection.rawId ?? null) : null;
+    if (targetSection && typeof targetSection.rawId === 'number') {
+      this.newPageTopicId = targetSection.rawId;
+    } else {
+      const firstSection = sections.find((s) => typeof s.rawId === 'number');
+      this.newPageTopicId = firstSection ? (firstSection.rawId ?? null) : null;
+    }
 
     this.addPageModalOpen.set(true);
   }
@@ -3327,6 +3388,13 @@ export class HomeComponent implements OnInit {
 
   closeAddPageModal() {
     this.addPageModalOpen.set(false);
+    this.newPageTitle = '';
+    this.newPageOverview = '';
+    this.newPageContent = '';
+    this.newPageImageUrl = '';
+    this.newPageBlocks.set([{ type: 'paragraph', text: '' }]);
+    this.addPageErrorMsg.set('');
+    this.addPageSuccessMsg.set('');
   }
 
   onNewPageImageSelected(event: Event) {
@@ -3376,6 +3444,12 @@ export class HomeComponent implements OnInit {
 
       this.addPageSuccessMsg.set(`Page "${title}" was created successfully and added to the search index!`);
       await this.loadTree();
+
+      // Automatically expand section accordion so the new page is immediately visible
+      const sec = this.tree()?.sections.find((s) => s.rawId === topicId);
+      if (sec) {
+        this.openTopics.update((map) => ({ ...map, [sec.order.toString()]: true }));
+      }
 
       setTimeout(() => {
         if (this.addPageModalOpen()) {
