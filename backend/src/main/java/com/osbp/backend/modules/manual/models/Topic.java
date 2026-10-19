@@ -29,6 +29,10 @@ public class Topic {
     @Column(nullable = false, length = 512)
     private String title;
 
+    /** Optional image URL or base64 data URI for custom module/topic illustration. */
+    @Column(columnDefinition = "TEXT")
+    private String imageUrl;
+
     @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("subNumber ASC")
     private List<SubTopic> subTopics = new ArrayList<>();
@@ -40,8 +44,13 @@ public class Topic {
     protected Topic() { }
 
     public Topic(int topicNumber, String title) {
+        this(topicNumber, title, null);
+    }
+
+    public Topic(int topicNumber, String title, String imageUrl) {
         this.topicNumber = topicNumber;
         this.title = title;
+        this.imageUrl = imageUrl;
     }
 
     // ------------------------------------------------------------------ //
@@ -60,8 +69,10 @@ public class Topic {
     public Long getId()           { return id; }
     public int getTopicNumber()   { return topicNumber; }
     public String getTitle()      { return title; }
+    public String getImageUrl()   { return imageUrl; }
     public List<SubTopic> getSubTopics() { return subTopics; }
 
     public void setTopicNumber(int topicNumber) { this.topicNumber = topicNumber; }
     public void setTitle(String title)          { this.title = title; }
+    public void setImageUrl(String imageUrl)    { this.imageUrl = imageUrl; }
 }

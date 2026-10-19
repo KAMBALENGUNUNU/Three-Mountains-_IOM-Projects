@@ -147,6 +147,9 @@ public class ManualServiceImpl implements ManualService {
         if (request.title() != null && !request.title().isBlank()) {
             topic.setTitle(request.title().trim());
         }
+        if (request.imageUrl() != null) {
+            topic.setImageUrl(request.imageUrl().trim().isEmpty() ? null : request.imageUrl().trim());
+        }
         Topic saved = topicRepository.save(topic);
         return toTopicDTO(saved);
     }
@@ -210,7 +213,7 @@ public class ManualServiceImpl implements ManualService {
         List<SubTopicDTO> subTopicDTOs = topic.getSubTopics().stream()
                 .map(this::toSubTopicDTO)
                 .toList();
-        return new TopicDTO(topic.getId(), topic.getTopicNumber(), topic.getTitle(), subTopicDTOs);
+        return new TopicDTO(topic.getId(), topic.getTopicNumber(), topic.getTitle(), topic.getImageUrl(), subTopicDTOs);
     }
 
     private SubTopicDTO toSubTopicDTO(SubTopic subTopic) {

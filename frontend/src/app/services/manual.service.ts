@@ -39,6 +39,7 @@ interface BackendTopic {
   id: number;
   topicNumber: number;
   title: string;
+  imageUrl?: string;
   subTopics?: BackendSubTopic[];
 }
 
@@ -182,20 +183,18 @@ export class ManualService {
       });
 
       let sectionTitle = top.title;
-      if (topicNum === 0) {
-        sectionTitle = 'Curriculum Framework & Preliminaries';
-      } else if (topicNum === 9) {
-        sectionTitle = 'Statutory References & Bibliography';
-      } else {
-        sectionTitle = `Module ${topicNum}: ${top.title}`;
+      if (topicNum >= 1 && topicNum <= 8 && !sectionTitle.toLowerCase().startsWith('module')) {
+        sectionTitle = `Module ${topicNum}: ${sectionTitle}`;
       }
 
       return {
         id: `sec-${top.id}`,
+        rawId: top.id,
         title: sectionTitle,
         slug: this.slugify(sectionTitle),
         order: topicNum,
         description: this.getModuleDescription(topicNum, top.title),
+        imageUrl: top.imageUrl,
         topics,
       };
     });
@@ -588,6 +587,20 @@ export class ManualService {
         content: payload.content,
         overview: payload.overview,
         imageUrl: payload.imageUrl,
+      }),
+    );
+    return { ok: true };
+  }
+
+  async updateTopic(
+    id: number,
+    payload: { title: string; imageUrl?: string; topicNumber?: number },
+  ): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.put(`${API_BASE_URL}/admin/topics/${id}`, {
+        title: payload.title,
+        imageUrl: payload.imageUrl,
+        topicNumber: payload.topicNumber,
       }),
     );
     return { ok: true };

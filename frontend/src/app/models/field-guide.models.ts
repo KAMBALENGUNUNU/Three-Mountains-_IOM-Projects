@@ -51,10 +51,12 @@ export interface Topic {
 
 export interface Section {
   id: string;
+  rawId?: number;
   title: string;
   slug: string;
   order: number;
   description: string;
+  imageUrl?: string;
   topics: Topic[];
 }
 

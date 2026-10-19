@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
  *
  * @param topicNumber the ordering number
  * @param title       the topic title
+ * @param imageUrl    optional image URL or data URI for the module illustration
  */
 public record UpdateTopicRequestDTO(
         @PositiveOrZero(message = "Topic number must be 0 or positive")
@@ -16,5 +17,11 @@ public record UpdateTopicRequestDTO(
 
         @NotBlank(message = "Title is required")
         @Size(max = 512, message = "Title must not exceed 512 characters")
-        String title
-) { }
+        String title,
+
+        String imageUrl
+) {
+    public UpdateTopicRequestDTO(Integer topicNumber, String title) {
+        this(topicNumber, title, null);
+    }
+}

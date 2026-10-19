@@ -142,12 +142,33 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               <li class="card {{ getTintClass(section.order) }}" [attr.data-topic]="section.order">
                 <!-- Header -->
                 <div class="c-head">
-                  <div class="c-img" role="img" aria-label="Image placeholder">
-                    <app-icon [name]="getIconName(section.order)" [size]="48" />
-                    <span>Image placeholder</span>
+                  <div class="c-img" role="img" aria-label="Module illustration">
+                    @if (section.imageUrl) {
+                      <img
+                        [src]="section.imageUrl"
+                        alt="{{ section.title }}"
+                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                      />
+                    } @else {
+                      <app-icon [name]="getIconName(section.order)" [size]="48" />
+                      <span>Image placeholder</span>
+                    }
                   </div>
                   <div class="c-body">
-                    <h2 class="c-title">{{ section.title }}</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                      <h2 class="c-title" style="margin: 0;">{{ section.title }}</h2>
+                      @if (authService.isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn-edit-module"
+                          (click)="openModuleEditor(section)"
+                          title="Edit this module's title and illustration image"
+                        >
+                          <app-icon name="edit" [size]="13" />
+                          Edit Module
+                        </button>
+                      }
+                    </div>
                     <span class="c-meta">
                       {{ getAllSubtopics(section).length }}
                       {{ getAllSubtopics(section).length === 1 ? 'Page' : 'Pages' }}
@@ -273,12 +294,33 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
             @for (sec of referenceSections(); track sec.id) {
               <li class="card t0" [attr.data-topic]="'ref-' + sec.order">
                 <div class="c-head">
-                  <div class="c-img" role="img" aria-label="Image placeholder">
-                    <app-icon name="t0" [size]="48" />
-                    <span>Image placeholder</span>
+                  <div class="c-img" role="img" aria-label="Module illustration">
+                    @if (sec.imageUrl) {
+                      <img
+                        [src]="sec.imageUrl"
+                        alt="{{ sec.title }}"
+                        style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                      />
+                    } @else {
+                      <app-icon name="t0" [size]="48" />
+                      <span>Image placeholder</span>
+                    }
                   </div>
                   <div class="c-body">
-                    <h2 class="c-title">{{ sec.title }}</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                      <h2 class="c-title" style="margin: 0;">{{ sec.title }}</h2>
+                      @if (authService.isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn-edit-module"
+                          (click)="openModuleEditor(sec)"
+                          title="Edit this module's title and illustration image"
+                        >
+                          <app-icon name="edit" [size]="13" />
+                          Edit Module
+                        </button>
+                      }
+                    </div>
                     <span class="c-meta">{{ getAllSubtopics(sec).length }} Resources</span>
                   </div>
                 </div>
@@ -681,6 +723,115 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   </div>
                 </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Module Editor Modal -->
+      @if (moduleModalOpen() && selectedModule(); as mod) {
+        <div class="modal-backdrop" (click)="closeModuleEditor()">
+          <div class="modal-card edit-modal-card" style="max-width: 600px;" (click)="$event.stopPropagation()">
+            <div class="modal-head">
+              <div>
+                <span class="modal-sub">Module Settings</span>
+                <h3 class="modal-title">Edit Module</h3>
+              </div>
+              <button type="button" class="btn-close" (click)="closeModuleEditor()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+              @if (moduleSuccessMsg()) {
+                <div class="form-success">{{ moduleSuccessMsg() }}</div>
+              }
+              @if (moduleErrorMsg()) {
+                <div class="form-error">{{ moduleErrorMsg() }}</div>
+              }
+
+              <!-- Module Title -->
+              <div class="form-group">
+                <label for="edit-module-title">Module Title:</label>
+                <input
+                  id="edit-module-title"
+                  type="text"
+                  [(ngModel)]="editModuleTitle"
+                  class="form-input"
+                  placeholder="e.g. Module 1: MIGRATION MANAGEMENT"
+                />
+              </div>
+
+              <!-- Module Image Management -->
+              <div class="form-group">
+                <label>Module Illustration / Image:</label>
+                <div class="image-uploader-card">
+                  <div class="image-uploader-controls">
+                    <label class="btn-upload-file">
+                      <span class="upload-sticker">📁</span>
+                      <span>Choose image file</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onModuleImageSelected($event)"
+                        style="display: none;"
+                      />
+                    </label>
+                    <span class="upload-or">or</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="editModuleImageUrl"
+                      placeholder="Paste Image URL (https://... or data:image...)"
+                      class="form-input"
+                      style="flex: 1; min-width: 220px;"
+                    />
+                    @if (editModuleImageUrl) {
+                      <button
+                        type="button"
+                        class="btn-remove-img"
+                        (click)="removeModuleImage()"
+                        title="Remove module image"
+                      >
+                        Remove
+                      </button>
+                    }
+                  </div>
+
+                  @if (editModuleImageUrl) {
+                    <div class="img-preview-box">
+                      <img [src]="editModuleImageUrl" alt="Module Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
+                      <div class="img-preview-meta">
+                        <span class="badge-success">Image Attached</span>
+                        <span class="img-preview-hint">
+                          This image will display on the module card replacing the placeholder.
+                        </span>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="img-empty-box">
+                      <span>No custom image selected (default topic illustration placeholder will be used)</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="modal-actions" style="margin-top: 1.5rem;">
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  [disabled]="savingModule()"
+                  (click)="closeModuleEditor()"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn-save"
+                  [disabled]="savingModule() || !editModuleTitle.trim()"
+                  (click)="handleSaveModuleEdit()"
+                >
+                  {{ savingModule() ? 'Saving...' : 'Save Module Changes' }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1146,6 +1297,27 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       .btn-card-delete:hover {
         background: #fef2f2;
       }
+      .btn-edit-module {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #00143c;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-edit-module:hover {
+        background: #FFB81C;
+        border-color: #e5a414;
+        color: #1a1a1a;
+      }
     `,
   ],
 })
@@ -1173,6 +1345,15 @@ export class HomeComponent implements OnInit {
   editSuccessMsg = signal('');
   editErrorMsg = signal('');
   previewImages = signal<Record<string, string>>({});
+
+  // Module Settings Editor
+  moduleModalOpen = signal(false);
+  selectedModule = signal<Section | null>(null);
+  editModuleTitle = '';
+  editModuleImageUrl = '';
+  savingModule = signal(false);
+  moduleSuccessMsg = signal('');
+  moduleErrorMsg = signal('');
 
   // Dropdown list computed from tree
   allSubtopicsList = computed(() => {
@@ -1482,6 +1663,77 @@ export class HomeComponent implements OnInit {
       this.editErrorMsg.set(err?.message || 'Failed to delete section.');
     } finally {
       this.deletingSection.set(false);
+    }
+  }
+
+  // --- Module Settings Editor Methods ---
+
+  openModuleEditor(sec: Section) {
+    this.selectedModule.set(sec);
+    this.editModuleTitle = sec.title;
+    this.editModuleImageUrl = sec.imageUrl || '';
+    this.moduleSuccessMsg.set('');
+    this.moduleErrorMsg.set('');
+    this.moduleModalOpen.set(true);
+  }
+
+  closeModuleEditor() {
+    this.moduleModalOpen.set(false);
+    this.selectedModule.set(null);
+  }
+
+  onModuleImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      this.moduleErrorMsg.set('Selected image is too large. Please select an image under 15MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.editModuleImageUrl = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeModuleImage() {
+    this.editModuleImageUrl = '';
+  }
+
+  async handleSaveModuleEdit() {
+    const mod = this.selectedModule();
+    if (!mod || !this.editModuleTitle.trim()) return;
+
+    if (!mod.rawId) {
+      this.moduleErrorMsg.set('Cannot find the topic ID for this module.');
+      return;
+    }
+
+    this.savingModule.set(true);
+    this.moduleSuccessMsg.set('');
+    this.moduleErrorMsg.set('');
+
+    try {
+      await this.manualService.updateTopic(mod.rawId, {
+        title: this.editModuleTitle.trim(),
+        imageUrl: this.editModuleImageUrl.trim() || undefined,
+        topicNumber: mod.order,
+      });
+
+      this.moduleSuccessMsg.set('Module updated successfully!');
+      await this.loadTree();
+      setTimeout(() => {
+        if (this.moduleModalOpen()) {
+          this.closeModuleEditor();
+        }
+      }, 900);
+    } catch (err: any) {
+      this.moduleErrorMsg.set(
+        err?.message || 'Failed to save module. Ensure you are logged in as admin.',
+      );
+    } finally {
+      this.savingModule.set(false);
     }
   }
 }
