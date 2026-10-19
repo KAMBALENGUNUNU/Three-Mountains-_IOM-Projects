@@ -957,36 +957,16 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       <!-- Add Section Modal Dialog -->
       <!-- ============================================================ -->
       @if (addSectionModalOpen()) {
-        <div class="modal-overlay" (click)="closeAddSectionModal()">
-          <div
-            class="modal-card modal-lg"
-            (click)="$event.stopPropagation()"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-section-title"
-          >
-            <!-- Header -->
-            <div class="modal-header">
+        <div class="modal-backdrop" (click)="closeAddSectionModal()">
+          <div class="modal-card edit-modal-card" style="max-width: 640px;" (click)="$event.stopPropagation()">
+            <div class="modal-head">
               <div>
-                <span class="modal-badge">Section Creator</span>
-                <h2 id="add-section-title" class="modal-title">
-                  Add New Section
-                </h2>
-                <p class="modal-subtitle">
-                  Create a new operational section / module on the main field guide overview.
-                </p>
+                <span class="modal-sub">Section Creator</span>
+                <h3 class="modal-title">Add New Section</h3>
               </div>
-              <button
-                type="button"
-                class="btn-close-modal"
-                (click)="closeAddSectionModal()"
-                aria-label="Close section creator dialog"
-              >
-                <app-icon name="close" [size]="14" />
-              </button>
+              <button type="button" class="btn-close" (click)="closeAddSectionModal()">&times;</button>
             </div>
 
-            <!-- Body -->
             <div class="modal-body">
               @if (addSectionSuccessMsg()) {
                 <div class="form-success">{{ addSectionSuccessMsg() }}</div>
@@ -1040,7 +1020,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                         (click)="newSectionImageUrl = ''"
                         title="Remove image"
                       >
-                        Remove image
+                        Remove
                       </button>
                     }
                   </div>
@@ -1050,7 +1030,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       <img [src]="newSectionImageUrl" alt="Section Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
                       <div class="img-preview-meta">
                         <span class="badge-success">Image Attached</span>
-                        <span class="img-preview-hint">This illustration image will be displayed on the section card.</span>
+                        <span class="img-preview-hint">This illustration image will be displayed on the section card replacing the placeholder.</span>
                       </div>
                     </div>
                   } @else {
@@ -1089,54 +1069,47 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       <!-- Add Page Modal Dialog -->
       <!-- ============================================================ -->
       @if (addPageModalOpen()) {
-        <div class="modal-overlay" (click)="closeAddPageModal()">
-          <div
-            class="modal-card modal-lg"
-            (click)="$event.stopPropagation()"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-page-title"
-          >
-            <!-- Header -->
-            <div class="modal-header">
+        <div class="modal-backdrop" (click)="closeAddPageModal()">
+          <div class="modal-card edit-modal-card" (click)="$event.stopPropagation()">
+            <div class="modal-head">
               <div>
-                <span class="modal-badge">Page Creator</span>
-                <h2 id="add-page-title" class="modal-title">
-                  Add New Page
-                </h2>
-                <p class="modal-subtitle">
-                  Create a new standard operating procedure or curriculum page inside a section.
-                </p>
+                <span class="modal-sub">Curriculum Creator</span>
+                <h3 class="modal-title">Add New Page</h3>
               </div>
+              <button type="button" class="btn-close" (click)="closeAddPageModal()">&times;</button>
+            </div>
+
+            <!-- Creator Navigation Tabs -->
+            <div class="modal-tabs">
               <button
                 type="button"
-                class="btn-close-modal"
-                (click)="closeAddPageModal()"
-                aria-label="Close page creator dialog"
+                class="modal-tab-btn"
+                [class.active]="addPageTab() === 'edit'"
+                (click)="addPageTab.set('edit')"
               >
-                <app-icon name="close" [size]="14" />
+                Edit Form
+              </button>
+              <button
+                type="button"
+                class="modal-tab-btn"
+                [class.active]="addPageTab() === 'preview'"
+                (click)="addPageTab.set('preview')"
+              >
+                Live Page Preview
               </button>
             </div>
 
-            <!-- Body -->
             <div class="modal-body">
-              @if (addPageSuccessMsg()) {
-                <div class="form-success">{{ addPageSuccessMsg() }}</div>
-              }
-              @if (addPageErrorMsg()) {
-                <div class="form-error">{{ addPageErrorMsg() }}</div>
-              }
-
-              <!-- Target Section -->
+              <!-- Target Section Dropdown -->
               <div class="form-group">
                 <label for="new-page-section-select">
                   Select Target Section:
-                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(The section where this page will appear)</span>
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(The section where this page will belong)</span>
                 </label>
                 <select
                   id="new-page-section-select"
                   [(ngModel)]="newPageTopicId"
-                  class="form-input"
+                  class="form-select"
                 >
                   @for (sec of (tree()?.sections || []); track sec.id) {
                     <option [value]="sec.rawId">{{ sec.title }}</option>
@@ -1144,121 +1117,223 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 </select>
               </div>
 
-              <!-- Page Title -->
-              <div class="form-group">
-                <label for="new-page-title">
-                  Page Title:
-                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(e.g., 4.3 Visa Verification Procedures)</span>
-                </label>
-                <input
-                  id="new-page-title"
-                  type="text"
-                  [(ngModel)]="newPageTitle"
-                  class="form-input"
-                  placeholder="Enter page title..."
-                />
-              </div>
+              @if (addPageTab() === 'edit') {
+                <!-- Page Title -->
+                <div class="form-group">
+                  <label for="new-page-title">Page Title:</label>
+                  <input
+                    id="new-page-title"
+                    type="text"
+                    [(ngModel)]="newPageTitle"
+                    class="form-input"
+                    placeholder="e.g. 4.3 Visa Verification Procedures"
+                  />
+                </div>
 
-              <!-- Brief Overview / Preview -->
-              <div class="form-group">
-                <label for="new-page-overview">
-                  Brief Overview:
-                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Short summary shown on the main page card accordion)</span>
-                </label>
-                <textarea
-                  id="new-page-overview"
-                  rows="2"
-                  [(ngModel)]="newPageOverview"
-                  class="form-input"
-                  placeholder="Enter brief overview summary..."
-                ></textarea>
-              </div>
-
-              <!-- Page Content -->
-              <div class="form-group">
-                <label for="new-page-content">
-                  Page Content:
-                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Full operational text displayed on the reader view)</span>
-                </label>
-                <textarea
-                  id="new-page-content"
-                  rows="7"
-                  [(ngModel)]="newPageContent"
-                  class="form-input form-textarea"
-                  placeholder="Enter page content text or markdown paragraphs..."
-                ></textarea>
-              </div>
-
-              <!-- Page Illustration Image -->
-              <div class="form-group">
-                <label>Page Illustration Image:</label>
-                <div class="image-uploader-card">
-                  <div class="image-uploader-controls">
-                    <label class="btn-upload-file">
-                      <span class="upload-sticker">📁</span>
-                      <span>Choose image file</span>
+                <!-- Page Image Management -->
+                <div class="form-group">
+                  <label>Page Illustration / Photo:</label>
+                  <div class="image-uploader-card">
+                    <div class="image-uploader-controls">
+                      <label class="btn-upload-file">
+                        <span class="upload-sticker">📁</span>
+                        <span>Choose image file</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          (change)="onNewPageImageSelected($event)"
+                          style="display: none;"
+                        />
+                      </label>
+                      <span class="upload-or">or</span>
                       <input
-                        type="file"
-                        accept="image/*"
-                        (change)="onNewPageImageSelected($event)"
-                        style="display: none;"
+                        type="text"
+                        [(ngModel)]="newPageImageUrl"
+                        placeholder="Paste Image URL (https://... or data:image...)"
+                        class="form-input"
+                        style="flex: 1; min-width: 220px;"
                       />
-                    </label>
-                    <span class="upload-or">or</span>
-                    <input
-                      type="text"
-                      [(ngModel)]="newPageImageUrl"
-                      placeholder="Paste Image URL (https://... or data:image...)"
-                      class="form-input"
-                      style="flex: 1; min-width: 220px;"
-                    />
+                      @if (newPageImageUrl) {
+                        <button
+                          type="button"
+                          class="btn-remove-img"
+                          (click)="newPageImageUrl = ''"
+                          title="Remove image"
+                        >
+                          Remove
+                        </button>
+                      }
+                    </div>
+
                     @if (newPageImageUrl) {
-                      <button
-                        type="button"
-                        class="btn-remove-img"
-                        (click)="newPageImageUrl = ''"
-                        title="Remove image"
-                      >
-                        Remove image
-                      </button>
+                      <div class="img-preview-box">
+                        <img [src]="newPageImageUrl" alt="Page Image Preview" class="img-thumb" />
+                        <div class="img-preview-meta">
+                          <span class="badge-success">Image Attached</span>
+                          <span class="img-preview-hint">This image will appear on the page and in card previews.</span>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="img-empty-box">
+                        <span>No custom image selected (default topic illustration placeholder will be used)</span>
+                      </div>
                     }
                   </div>
+                </div>
 
-                  @if (newPageImageUrl) {
-                    <div class="img-preview-box">
-                      <img [src]="newPageImageUrl" alt="Page Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
-                      <div class="img-preview-meta">
-                        <span class="badge-success">Image Attached</span>
-                        <span class="img-preview-hint">This image will appear on the page overview accordion.</span>
+                <!-- Card Overview / Summary -->
+                <div class="form-group">
+                  <label for="new-page-overview">
+                    Card Overview & Summary:
+                    <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Short summary shown on main page cards)</span>
+                  </label>
+                  <textarea
+                    id="new-page-overview"
+                    rows="2"
+                    [(ngModel)]="newPageOverview"
+                    class="form-input"
+                    placeholder="Enter brief preview summary..."
+                  ></textarea>
+                </div>
+
+                <!-- Full Text Content -->
+                <div class="form-group">
+                  <label for="new-page-content">
+                    Main Page Content:
+                    <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Paragraphs / text displayed on reader page)</span>
+                  </label>
+                  <textarea
+                    id="new-page-content"
+                    rows="8"
+                    [(ngModel)]="newPageContent"
+                    class="form-input form-textarea"
+                    placeholder="Enter page content text or markdown paragraphs..."
+                  ></textarea>
+                </div>
+
+                @if (addPageSuccessMsg()) {
+                  <div class="form-success">{{ addPageSuccessMsg() }}</div>
+                }
+                @if (addPageErrorMsg()) {
+                  <div class="form-error">{{ addPageErrorMsg() }}</div>
+                }
+
+                <div class="modal-actions" style="justify-content: flex-end; gap: 0.8rem;">
+                  <button
+                    type="button"
+                    class="btn-cancel"
+                    [disabled]="creatingPage()"
+                    (click)="closeAddPageModal()"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-preview-switch"
+                    (click)="addPageTab.set('preview')"
+                    [disabled]="!newPageTitle.trim()"
+                    title="Preview exact page display before publishing"
+                  >
+                    Preview Page
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-save"
+                    [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
+                    (click)="handleCreatePage()"
+                  >
+                    {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
+                  </button>
+                </div>
+              } @else {
+                <!-- Live Page Preview Mode -->
+                <div class="live-preview-container">
+                  <div class="preview-notice-bar">
+                    <div style="display: flex; align-items: center; gap: 0.6rem;">
+                      <span class="preview-badge-live">Preview Mode</span>
+                      <span style="font-size: 0.88rem; color: #334155; font-weight: 600;">
+                        How this new page will appear to readers before publishing:
+                      </span>
+                    </div>
+                    <button type="button" class="btn-back-to-edit" (click)="addPageTab.set('edit')">
+                      Back to Editing
+                    </button>
+                  </div>
+
+                  <div class="preview-reader-mock">
+                    <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 0.4rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
+                      Official OSBP Field Guide Page
+                    </p>
+
+                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; color: #00143c; line-height: 1.2;">
+                      {{ newPageTitle || 'Untitled Page' }}
+                    </h1>
+
+                    <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1.2rem; font-weight: 600;">
+                      Official OSBP Field Guide Page • ~{{ getNewPageWordCount() }} words
+                    </p>
+
+                    @if (newPageOverview.trim()) {
+                      <div class="preview-overview-box">
+                        <div class="preview-overview-title">Key Operational Overview</div>
+                        <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #1e293b; font-weight: 500;">
+                          {{ newPageOverview }}
+                        </p>
+                      </div>
+                    }
+
+                    <div class="preview-content-layout">
+                      <div class="ph" role="img" aria-label="Page illustration">
+                        @if (newPageImageUrl) {
+                          <img
+                            [src]="newPageImageUrl"
+                            alt="{{ newPageTitle }}"
+                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                          />
+                        } @else {
+                          <app-icon name="book" [size]="56" />
+                          <span>Image placeholder</span>
+                        }
+                      </div>
+
+                      <div class="ptxt">
+                        @if (getNewPageParagraphs().length > 0) {
+                          @for (para of getNewPageParagraphs(); track $index) {
+                            <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
+                              {{ para }}
+                            </p>
+                          }
+                        } @else {
+                          <p style="color: #94a3b8; font-style: italic;">
+                            No content entered yet for this page.
+                          </p>
+                        }
                       </div>
                     </div>
-                  } @else {
-                    <div class="img-empty-box">
-                      <span>No custom image selected (default page placeholder icon will be used)</span>
-                    </div>
-                  }
-                </div>
-              </div>
+                  </div>
 
-              <!-- Actions -->
-              <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.5rem; gap: 0.8rem;">
-                <button
-                  type="button"
-                  class="btn-cancel"
-                  [disabled]="creatingPage()"
-                  (click)="closeAddPageModal()"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  class="btn-save"
-                  [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
-                  (click)="handleCreatePage()"
-                >
-                  {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
-                </button>
-              </div>
+                  @if (addPageSuccessMsg()) {
+                    <div class="form-success" style="margin-top: 1rem;">{{ addPageSuccessMsg() }}</div>
+                  }
+                  @if (addPageErrorMsg()) {
+                    <div class="form-error" style="margin-top: 1rem;">{{ addPageErrorMsg() }}</div>
+                  }
+
+                  <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.2rem; gap: 0.8rem;">
+                    <button type="button" class="btn-cancel" (click)="addPageTab.set('edit')">
+                      Back to Edit Form
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-save btn-publish-live"
+                      [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
+                      (click)="handleCreatePage()"
+                    >
+                      {{ creatingPage() ? 'Publishing...' : 'Create & Publish Live' }}
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -1902,6 +1977,7 @@ export class HomeComponent implements OnInit {
 
   // Add Page Creator
   addPageModalOpen = signal(false);
+  addPageTab = signal<'edit' | 'preview'>('edit');
   newPageTopicId: number | null = null;
   newPageTitle = '';
   newPageOverview = '';
@@ -2557,6 +2633,7 @@ export class HomeComponent implements OnInit {
   // ------------------------------------------------------------------ //
 
   openAddPageModal() {
+    this.addPageTab.set('edit');
     this.newPageTitle = '';
     this.newPageOverview = '';
     this.newPageContent = '';
@@ -2569,6 +2646,19 @@ export class HomeComponent implements OnInit {
     this.newPageTopicId = firstSection ? (firstSection.rawId ?? null) : null;
 
     this.addPageModalOpen.set(true);
+  }
+
+  getNewPageParagraphs(): string[] {
+    if (!this.newPageContent) return [];
+    return this.newPageContent
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+  }
+
+  getNewPageWordCount(): number {
+    if (!this.newPageContent) return 0;
+    return this.newPageContent.trim().split(/\s+/).filter(Boolean).length;
   }
 
   closeAddPageModal() {
