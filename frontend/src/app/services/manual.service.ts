@@ -479,7 +479,26 @@ export class ManualService {
         flushList();
         const align = (mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full');
         const imgUrl = mediaMatch[2].trim();
-        const inlineTxt = (mediaMatch[3] || '').trim();
+        let inlineTxt = (mediaMatch[3] || '').trim();
+
+        while (i + 1 < lines.length) {
+          const nextRaw = lines[i + 1];
+          const nextTrimmed = nextRaw.trim();
+          if (
+            nextTrimmed.match(/^\[media:(left|right|full)\|/i) ||
+            nextTrimmed.startsWith('#') ||
+            nextTrimmed.startsWith('> ') ||
+            nextTrimmed.startsWith('|') ||
+            nextTrimmed.startsWith('![')
+          ) {
+            break;
+          }
+          i++;
+          if (nextTrimmed) {
+            inlineTxt = inlineTxt ? `${inlineTxt}\n\n${nextTrimmed}` : nextTrimmed;
+          }
+        }
+
         blocks.push({
           type: 'media-text',
           imageUrl: imgUrl,
@@ -496,7 +515,26 @@ export class ManualService {
         flushList();
         const caption = mdImgMatch[1].trim();
         const imgUrl = mdImgMatch[2].trim();
-        const restTxt = (mdImgMatch[3] || '').trim();
+        let restTxt = (mdImgMatch[3] || '').trim();
+
+        while (i + 1 < lines.length) {
+          const nextRaw = lines[i + 1];
+          const nextTrimmed = nextRaw.trim();
+          if (
+            nextTrimmed.match(/^\[media:(left|right|full)\|/i) ||
+            nextTrimmed.startsWith('#') ||
+            nextTrimmed.startsWith('> ') ||
+            nextTrimmed.startsWith('|') ||
+            nextTrimmed.startsWith('![')
+          ) {
+            break;
+          }
+          i++;
+          if (nextTrimmed) {
+            restTxt = restTxt ? `${restTxt}\n\n${nextTrimmed}` : nextTrimmed;
+          }
+        }
+
         blocks.push({
           type: 'media-text',
           imageUrl: imgUrl,

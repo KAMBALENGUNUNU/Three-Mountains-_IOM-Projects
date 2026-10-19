@@ -82,7 +82,19 @@ import { IconComponent } from '../icon/icon.component';
             </div>
           }
 
-          <!-- Content Blocks: Alternating image placeholders and text -->
+          @if (art.imageUrl && !hasMediaBlocks()) {
+            <div
+              style="margin: 1.2rem 0 1.8rem; border-radius: 10px; overflow: hidden; max-height: 400px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);"
+            >
+              <img
+                [src]="art.imageUrl"
+                alt="{{ art.title }}"
+                style="width: 100%; height: 100%; object-fit: cover; display: block;"
+              />
+            </div>
+          }
+
+          <!-- Content Blocks -->
           <div class="blocks-container">
               @for (block of art.content; track $index; let idx = $index) {
                 @if (block.type === 'heading') {
@@ -138,23 +150,24 @@ import { IconComponent } from '../icon/icon.component';
                 } @else if (block.type === 'media-text') {
                   <div
                     class="block {{ block.alignment === 'left' ? 'left' : block.alignment === 'full' ? 'full-media' : 'right' }} {{ tintClass() }}"
-                    style="margin-bottom: 2rem;"
                   >
-                    <div class="ph" role="img" [attr.aria-label]="block.caption || 'Section illustration'">
-                      @if (block.imageUrl) {
+                    @if (block.imageUrl) {
+                      <div class="ph" role="img" [attr.aria-label]="block.caption || 'Section illustration'">
                         <img
                           [src]="block.imageUrl"
                           alt="{{ block.caption || art.title }}"
                           style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
                         />
-                      } @else {
+                      </div>
+                    } @else {
+                      <div class="ph" role="img" aria-label="Section illustration placeholder">
                         <app-icon [name]="iconName()" [size]="56" />
                         <span>Image placeholder</span>
-                      }
-                    </div>
+                      </div>
+                    }
                     <div class="btxt">
                       @if (block.text) {
-                        <p>{{ block.text }}</p>
+                        <p style="margin: 0; font-size: 1.05rem; line-height: 1.7; color: var(--ink);">{{ block.text }}</p>
                       }
                       @if (block.caption) {
                         <small style="display: block; margin-top: 0.4rem; color: #64748b; font-style: italic;">
@@ -164,24 +177,8 @@ import { IconComponent } from '../icon/icon.component';
                     </div>
                   </div>
                 } @else {
-                  <div
-                    class="block {{ idx % 2 === 0 ? 'left' : 'right' }} {{ tintClass() }}"
-                  >
-                    <div class="ph" role="img" aria-label="Section illustration">
-                      @if (idx === 0 && art.imageUrl) {
-                        <img
-                          [src]="art.imageUrl"
-                          alt="{{ art.title }}"
-                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
-                        />
-                      } @else {
-                        <app-icon [name]="iconName()" [size]="56" />
-                        <span>Image placeholder</span>
-                      }
-                    </div>
-                    <div class="btxt">
-                      <p>{{ block.text }}</p>
-                    </div>
+                  <div class="reader-text-paragraph">
+                    <p>{{ block.text }}</p>
                   </div>
                 }
               }
@@ -248,6 +245,11 @@ export class ReaderComponent implements OnInit, OnDestroy {
   iconName = signal('t1');
 
   private routeSub?: Subscription;
+
+  hasMediaBlocks(): boolean {
+    const art = this.article();
+    return !!art?.content.some((b) => b.type === 'media-text' && !!b.imageUrl);
+  }
 
   constructor(
     private route: ActivatedRoute,
