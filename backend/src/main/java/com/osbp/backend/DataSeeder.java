@@ -31,7 +31,9 @@ public class DataSeeder {
             TopicRepository topicRepository,
             TikaExtractionService tikaExtractionService,
             com.osbp.backend.modules.notification.repositories.NotificationRepository notificationRepository,
-            com.osbp.backend.modules.search.services.LuceneIndexService luceneIndexService) {
+            com.osbp.backend.modules.search.services.LuceneIndexService luceneIndexService,
+            com.osbp.backend.modules.manual.services.ManualService manualService,
+            com.osbp.backend.modules.search.services.LuceneSearchService luceneSearchService) {
         return args -> {
             // 1. Seed Accounts
             seedUserIfNotExists(userRepository, passwordEncoder, "admin@osbp.com", "Admin@1234", Role.ADMIN);
@@ -90,6 +92,15 @@ public class DataSeeder {
                         log.info("✅ Lucene search index successfully built and ready for production search queries.");
                     } else {
                         log.info("🔍 Lucene search index verified on disk.");
+                    }
+
+                    // 5. Pre-warm TOC Cache & Lucene Searcher in RAM so the FIRST user gets instant sub-30ms responses
+                    try {
+                        manualService.getTableOfContents();
+                        luceneSearchService.searchDetailed("OSBP", 5);
+                        log.info("⚡ In-memory cache pre-warmed for Table of Contents & Lucene Searcher. Ready for instant user requests.");
+                    } catch (Exception e) {
+                        log.warn("Cache pre-warming notice: {}", e.getMessage());
                     }
                 } catch (Exception e) {
                     log.error("⚠️ Error checking/building Lucene search index on startup: {}", e.getMessage(), e);
