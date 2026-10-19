@@ -460,7 +460,8 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   <div class="image-uploader-card">
                     <div class="image-uploader-controls">
                       <label class="btn-upload-file">
-                        Choose Image File
+                        <span class="upload-sticker">📁</span>
+                        <span>Choose image file</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -884,19 +885,24 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       .btn-upload-file {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
-        background: #002244;
+        gap: 0.5rem;
+        background: var(--blue, #003399);
         color: #ffffff;
-        font-size: 0.85rem;
+        font-size: 0.92rem;
         font-weight: 700;
-        padding: 0.55rem 0.9rem;
+        padding: 0.6rem 1.1rem;
         border-radius: 6px;
         cursor: pointer;
-        transition: background 0.15s;
+        transition: background 0.15s, transform 0.1s;
         white-space: nowrap;
+        box-shadow: 0 2px 6px rgba(0, 53, 160, 0.25);
       }
       .btn-upload-file:hover {
-        background: #00143c;
+        background: #002277;
+      }
+      .upload-sticker {
+        font-size: 1.15rem;
+        line-height: 1;
       }
       .upload-or {
         font-size: 0.8rem;
