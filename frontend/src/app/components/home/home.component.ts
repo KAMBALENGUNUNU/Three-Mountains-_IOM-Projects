@@ -264,17 +264,17 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                       class="btn btn-admin-dark"
                                       style="font-size: 0.84rem; font-weight: 700; padding: 0.45rem 0.85rem;"
                                       (click)="openDirectEdit(sub)"
-                                      title="Edit this section directly from main page"
+                                      title="Edit this page directly from main page"
                                     >
-                                      Edit Section
+                                      Edit Page
                                     </button>
                                     <button
                                       type="button"
                                       class="btn btn-card-delete"
                                       (click)="handleDeleteDirect(sub)"
-                                      title="Delete this section"
+                                      title="Delete this page"
                                     >
-                                      Delete
+                                      Delete Page
                                     </button>
                                   }
                                 </div>
@@ -413,17 +413,17 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                                       class="btn btn-admin-dark"
                                       style="font-size: 0.84rem; font-weight: 700; padding: 0.45rem 0.85rem;"
                                       (click)="openDirectEdit(sub)"
-                                      title="Edit this section directly from main page"
+                                      title="Edit this page directly from main page"
                                     >
-                                      Edit Section
+                                      Edit Page
                                     </button>
                                     <button
                                       type="button"
                                       class="btn btn-card-delete"
                                       (click)="handleDeleteDirect(sub)"
-                                      title="Delete this section"
+                                      title="Delete this page"
                                     >
-                                      Delete
+                                      Delete Page
                                     </button>
                                   }
                                 </div>
@@ -458,7 +458,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
             <div class="modal-head">
               <div>
                 <span class="modal-sub">Curriculum Editor</span>
-                <h3 class="modal-title">Edit Manual Content</h3>
+                <h3 class="modal-title">Edit Page Content</h3>
               </div>
               <button type="button" class="btn-close" (click)="editModalOpen.set(false)">&times;</button>
             </div>
@@ -484,9 +484,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
             </div>
 
             <div class="modal-body">
-              <!-- Section Selector Dropdown (Always visible at top so admin knows what is being edited) -->
+              <!-- Page Selector Dropdown (Always visible at top so admin knows what is being edited) -->
               <div class="form-group">
-                <label for="subtopic-picker">Select Section / Page to Edit:</label>
+                <label for="subtopic-picker">Select Page to Edit:</label>
                 <select
                   id="subtopic-picker"
                   [ngModel]="selectedSubtopicId()"
@@ -501,24 +501,24 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
               @if (loadingSectionEdit()) {
                 <div style="padding: 2.5rem; text-align: center; color: var(--muted); font-size: 0.95rem;">
-                  Loading section details...
+                  Loading page details...
                 </div>
               } @else if (editTab() === 'edit') {
-                <!-- Section Title -->
+                <!-- Page Title -->
                 <div class="form-group">
-                  <label for="edit-title">Section Title:</label>
+                  <label for="edit-title">Page Title:</label>
                   <input
                     id="edit-title"
                     type="text"
                     [(ngModel)]="editTitle"
                     class="form-input"
-                    placeholder="Section Title"
+                    placeholder="Page Title"
                   />
                 </div>
 
                 <!-- Page Image Management (File Upload or Image URL) -->
                 <div class="form-group">
-                  <label>Section Page Image / Photo:</label>
+                  <label>Page Illustration / Photo:</label>
                   <div class="image-uploader-card">
                     <div class="image-uploader-controls">
                       <label class="btn-upload-file">
@@ -553,11 +553,11 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                     @if (editImageUrl) {
                       <div class="img-preview-box">
-                        <img [src]="editImageUrl" alt="Section Image Preview" class="img-thumb" />
+                        <img [src]="editImageUrl" alt="Page Image Preview" class="img-thumb" />
                         <div class="img-preview-meta">
                           <span class="badge-success">Image Attached</span>
                           <span class="img-preview-hint">
-                            This image will appear on the section page and in card previews.
+                            This image will appear on the page and in card previews.
                           </span>
                         </div>
                       </div>
@@ -587,7 +587,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <!-- Full Text Content -->
                 <div class="form-group">
                   <label for="edit-content">
-                    Main Section Content:
+                    Main Page Content:
                     <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Paragraphs / text displayed on reader page)</span>
                   </label>
                   <textarea
@@ -595,7 +595,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     rows="8"
                     [(ngModel)]="editContentText"
                     class="form-input form-textarea"
-                    placeholder="Enter section content text..."
+                    placeholder="Enter page content text..."
                   ></textarea>
                 </div>
 
@@ -612,9 +612,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     class="btn-delete"
                     [disabled]="deletingSection() || savingEdit()"
                     (click)="handleDeleteCurrentSection()"
-                    title="Delete this section"
+                    title="Delete this page"
                   >
-                    {{ deletingSection() ? 'Deleting...' : 'Delete Section' }}
+                    {{ deletingSection() ? 'Deleting...' : 'Delete Page' }}
                   </button>
                   <div style="display: flex; gap: 0.8rem;">
                     <button
@@ -639,7 +639,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       [disabled]="savingEdit() || !editTitle.trim() || deletingSection()"
                       (click)="handleSaveContentEdit()"
                     >
-                      {{ savingEdit() ? 'Saving...' : 'Save Changes' }}
+                      {{ savingEdit() ? 'Saving...' : 'Save Page Changes' }}
                     </button>
                   </div>
                 </div>
@@ -660,15 +660,15 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                   <div class="preview-reader-mock">
                     <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 0.4rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">
-                      Official OSBP Manual Curriculum
+                      Official OSBP Field Guide Page
                     </p>
 
                     <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; color: #00143c; line-height: 1.2;">
-                      {{ editTitle || 'Untitled Section' }}
+                      {{ editTitle || 'Untitled Page' }}
                     </h1>
 
                     <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1.2rem; font-weight: 600;">
-                      Official OSBP Manual Section • ~{{ getPreviewWordCount() }} words
+                      Official OSBP Field Guide Page • ~{{ getPreviewWordCount() }} words
                     </p>
 
                     @if (editOverview.trim()) {
@@ -681,7 +681,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     }
 
                     <div class="preview-content-layout">
-                      <div class="ph" role="img" aria-label="Section illustration">
+                      <div class="ph" role="img" aria-label="Page illustration">
                         @if (editImageUrl) {
                           <img
                             [src]="editImageUrl"
@@ -703,7 +703,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           }
                         } @else {
                           <p style="color: #94a3b8; font-style: italic;">
-                            No content entered yet for this section.
+                            No content entered yet for this page.
                           </p>
                         }
                       </div>
@@ -723,9 +723,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       class="btn-delete"
                       [disabled]="deletingSection() || savingEdit()"
                       (click)="handleDeleteCurrentSection()"
-                      title="Delete this section"
+                      title="Delete this page"
                     >
-                      {{ deletingSection() ? 'Deleting...' : 'Delete Section' }}
+                      {{ deletingSection() ? 'Deleting...' : 'Delete Page' }}
                     </button>
                     <div style="display: flex; gap: 0.8rem;">
                       <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
@@ -1677,7 +1677,7 @@ export class HomeComponent implements OnInit {
 
   async handleDeleteDirect(sub: SubTopic) {
     const ok = window.confirm(
-      `Are you sure you want to delete "${sub.title}"?\n\nThis will permanently remove this section from the manual.`
+      `Are you sure you want to delete "${sub.title}"?\n\nThis will permanently remove this page from the manual.`
     );
     if (!ok) return;
 
@@ -1688,7 +1688,7 @@ export class HomeComponent implements OnInit {
       }
       await this.loadTree();
     } catch (err: any) {
-      alert(err?.message || 'Failed to delete section.');
+      alert(err?.message || 'Failed to delete page.');
     }
   }
 
@@ -1696,7 +1696,7 @@ export class HomeComponent implements OnInit {
     const subId = this.selectedSubtopicId();
     if (!subId) return;
 
-    const title = this.editTitle || 'this section';
+    const title = this.editTitle || 'this page';
     const ok = window.confirm(
       `Are you sure you want to permanently delete "${title}"?`
     );
@@ -1712,7 +1712,7 @@ export class HomeComponent implements OnInit {
       }
       await this.loadTree();
     } catch (err: any) {
-      this.editErrorMsg.set(err?.message || 'Failed to delete section.');
+      this.editErrorMsg.set(err?.message || 'Failed to delete page.');
     } finally {
       this.deletingSection.set(false);
     }

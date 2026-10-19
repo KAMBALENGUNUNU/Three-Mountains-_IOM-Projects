@@ -55,9 +55,9 @@ import { IconComponent } from '../icon/icon.component';
               type="button"
               style="padding: 0.4rem 0.9rem; font-size: 0.84rem; border: 1px solid #ef4444; border-radius: 6px; background: transparent; color: #dc2626; font-weight: 700; cursor: pointer;"
               (click)="handleDeleteCurrent()"
-              title="Delete this section from the manual"
+              title="Delete this page from the manual"
             >
-              Delete Section
+              Delete Page
             </button>
           }
         </header>
@@ -326,7 +326,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
     const art = this.article();
     if (!art) return;
     const ok = window.confirm(
-      `Are you sure you want to delete "${art.title}"?\n\nThis will permanently remove this section from the manual.`
+      `Are you sure you want to delete "${art.title}"?\n\nThis will permanently remove this page from the manual.`
     );
     if (!ok) return;
 
@@ -334,7 +334,7 @@ export class ReaderComponent implements OnInit, OnDestroy {
       await this.manualService.deleteSection(art.subtopicId);
       this.router.navigate(['/']);
     } catch (err: any) {
-      alert(err?.message || 'Failed to delete section.');
+      alert(err?.message || 'Failed to delete page.');
     }
   }
 }
