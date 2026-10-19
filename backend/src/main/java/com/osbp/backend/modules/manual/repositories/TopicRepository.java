@@ -19,4 +19,16 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
      */
     @Query("SELECT DISTINCT t FROM Topic t LEFT JOIN FETCH t.subTopics ORDER BY t.topicNumber ASC")
     List<Topic> findAllWithSubTopics();
+
+    /**
+     * Returns the maximum topicNumber currently assigned, or null if no topics exist.
+     */
+    @Query("SELECT MAX(t.topicNumber) FROM Topic t")
+    Integer findMaxTopicNumber();
+
+    /**
+     * Returns the maximum topicNumber among core curriculum topics (topicNumber < threshold, e.g. < 9).
+     */
+    @Query("SELECT MAX(t.topicNumber) FROM Topic t WHERE t.topicNumber < :threshold")
+    Integer findMaxTopicNumberLessThan(@org.springframework.data.repository.query.Param("threshold") int threshold);
 }

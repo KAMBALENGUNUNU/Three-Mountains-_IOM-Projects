@@ -2031,13 +2031,24 @@ export class HomeComponent implements OnInit {
   coreModules(): Section[] {
     const t = this.tree();
     if (!t) return [];
-    return t.sections.filter((s) => s.order >= 1 && s.order <= 8);
+    return t.sections.filter((s) => {
+      if (s.order === 0) return false;
+      const lower = s.title.toLowerCase();
+      if (lower.includes('reference') || lower.includes('bibliography') || lower.includes('preliminar')) {
+        return false;
+      }
+      return true;
+    });
   }
 
   referenceSections(): Section[] {
     const t = this.tree();
     if (!t) return [];
-    return t.sections.filter((s) => s.order === 0 || s.order > 8);
+    return t.sections.filter((s) => {
+      if (s.order === 0) return true;
+      const lower = s.title.toLowerCase();
+      return lower.includes('reference') || lower.includes('bibliography') || lower.includes('preliminar');
+    });
   }
 
   isTopicOpen(no: string): boolean {
@@ -2141,15 +2152,16 @@ export class HomeComponent implements OnInit {
     const [moved] = coreList.splice(fromIndex, 1);
     coreList.splice(toIndex, 0, moved);
 
-    // Optimistically renumber orders 1..N and update titles
+    // Renumber orders 1..N and update titles
     coreList.forEach((sec, idx) => {
       const newNum = idx + 1;
       sec.order = newNum;
       sec.title = this.updateSectionNumberInTitle(sec.title, newNum);
     });
 
-    const nonCoreBefore = currentTree.sections.filter((s) => s.order === 0);
-    const nonCoreAfter = currentTree.sections.filter((s) => s.order > 8);
+    const coreRawIds = new Set(coreList.map((s) => s.rawId));
+    const nonCoreBefore = currentTree.sections.filter((s) => s.order === 0 && !coreRawIds.has(s.rawId));
+    const nonCoreAfter = currentTree.sections.filter((s) => s.order !== 0 && !coreRawIds.has(s.rawId));
     const updatedSections = [...nonCoreBefore, ...coreList, ...nonCoreAfter];
     this.tree.set({ ...currentTree, sections: updatedSections });
 
@@ -2570,7 +2582,8 @@ export class HomeComponent implements OnInit {
   // ------------------------------------------------------------------ //
 
   openAddSectionModal() {
-    this.newSectionTitle = '';
+    const nextNum = this.coreModules().length + 1;
+    this.newSectionTitle = `Section ${nextNum}: `;
     this.newSectionImageUrl = '';
     this.addSectionErrorMsg.set('');
     this.addSectionSuccessMsg.set('');

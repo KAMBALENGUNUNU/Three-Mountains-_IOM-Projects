@@ -238,11 +238,31 @@ public class ManualServiceImpl implements ManualService {
     @Transactional
     @CacheEvict(value = {"toc", "sections"}, allEntries = true)
     public TopicDTO createTopic(CreateTopicRequestDTO request) {
-        int topicNum = (request.topicNumber() != null) ? request.topicNumber() : (int) (topicRepository.count());
-        String imageUrl = (request.imageUrl() != null && !request.imageUrl().isBlank()) ? request.imageUrl().trim() : null;
-        Topic topic = new Topic(topicNum, request.title().trim(), imageUrl);
+        int topicNum;
+        if (request.topicNumber() != null) {
+            topicNum = request.topicNumber();
+        } else {
+            Integer maxCore = topicRepository.findMaxTopicNumberLessThan(9);
+            if (maxCore != null && maxCore >= 1) {
+                topicNum = maxCore + 1;
+            } else {
+                Integer maxAny = topicRepository.findMaxTopicNumber();
+                topicNum = (maxAny != null && maxAny > 0) ? (maxAny + 1) : 1;
+            }
+        }
 
-        SubTopic defaultSubTopic = new SubTopic(1, request.title().trim(), topic);
+        String rawTitle = request.title().trim();
+        String finalTitle;
+        if (rawTitle.matches("(?i)^(section|module)\\s*\\d*[:.-]?\\s*.*")) {
+            finalTitle = rawTitle.replaceFirst("(?i)^(section|module)\\s*\\d*[:.-]?\\s*", "Section " + topicNum + ": ");
+        } else {
+            finalTitle = "Section " + topicNum + ": " + rawTitle;
+        }
+
+        String imageUrl = (request.imageUrl() != null && !request.imageUrl().isBlank()) ? request.imageUrl().trim() : null;
+        Topic topic = new Topic(topicNum, finalTitle, imageUrl);
+
+        SubTopic defaultSubTopic = new SubTopic(1, finalTitle, topic);
         topic.addSubTopic(defaultSubTopic);
 
         Topic saved = topicRepository.save(topic);

@@ -185,10 +185,13 @@ export class ManualService {
       });
 
       let sectionTitle = top.title;
-      if (topicNum >= 1 && topicNum <= 8) {
+      const isReferences = sectionTitle.toLowerCase().includes('reference') || sectionTitle.toLowerCase().includes('bibliography');
+      if (topicNum >= 1 && !isReferences) {
         if (/^module\s*\d*[:.-]?\s*/i.test(sectionTitle)) {
           sectionTitle = sectionTitle.replace(/^module\s*\d*[:.-]?\s*/i, `Section ${topicNum}: `);
-        } else if (!sectionTitle.toLowerCase().startsWith('section')) {
+        } else if (/^section\s*\d*[:.-]?\s*/i.test(sectionTitle)) {
+          sectionTitle = sectionTitle.replace(/^section\s*\d*[:.-]?\s*/i, `Section ${topicNum}: `);
+        } else {
           sectionTitle = `Section ${topicNum}: ${sectionTitle}`;
         }
       }
