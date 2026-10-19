@@ -72,7 +72,7 @@ export interface ContentTree {
 // ---- Article / page content ----
 
 export interface ContentBlock {
-  type: 'heading' | 'paragraph' | 'list' | 'table' | 'callout' | 'code' | 'image' | 'quote';
+  type: 'heading' | 'paragraph' | 'list' | 'table' | 'callout' | 'code' | 'image' | 'quote' | 'media-text';
   level?: number;
   text?: string;
   items?: string[];
@@ -80,6 +80,7 @@ export interface ContentBlock {
   headers?: string[];
   caption?: string;
   imageUrl?: string;
+  alignment?: 'left' | 'right' | 'full';
   variant?: 'info' | 'warning' | 'danger' | 'success';
   _outlineIndex?: number;
 }

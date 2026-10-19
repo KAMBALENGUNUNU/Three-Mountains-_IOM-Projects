@@ -2,7 +2,7 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ContentTree, Section, SubTopic } from '../../models/field-guide.models';
+import { ContentTree, Section, SubTopic, ContentBlock } from '../../models/field-guide.models';
 import { ManualService } from '../../services/manual.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -669,19 +669,169 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   ></textarea>
                 </div>
 
-                <!-- Full Text Content -->
-                <div class="form-group">
-                  <label for="edit-content">
-                    Main Page Content:
-                    <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Paragraphs / text displayed on reader page)</span>
-                  </label>
-                  <textarea
-                    id="edit-content"
-                    rows="8"
-                    [(ngModel)]="editContentText"
-                    class="form-input form-textarea"
-                    placeholder="Enter page content text..."
-                  ></textarea>
+                <!-- Modular Content Blocks Section -->
+                <div class="form-group" style="margin-top: 1.5rem;">
+                  <div class="content-blocks-header">
+                    <div>
+                      <span class="content-blocks-title">Page Content Blocks & Illustrations</span>
+                      <p style="margin: 0.15rem 0 0; font-size: 0.82rem; color: #64748b;">
+                        Arrange your page paragraphs and images. For each image, you can choose left or right text alignment.
+                      </p>
+                    </div>
+                    <div class="content-blocks-actions">
+                      <button type="button" class="btn-add-block" (click)="addEditBlock('paragraph')">
+                        + Add Text Paragraph
+                      </button>
+                      <button type="button" class="btn-add-block" (click)="addEditBlock('media-text')">
+                        + Add Image & Text Block
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- List of Editable Blocks -->
+                  @for (blk of editBlocks(); track $index; let bIdx = $index) {
+                    <div class="block-card">
+                      <div class="block-header">
+                        <div style="display: flex; align-items: center; gap: 0.6rem;">
+                          <span class="block-badge" [class.badge-media]="blk.type === 'media-text'">
+                            {{ blk.type === 'media-text' ? '🖼️ Media + Text' : '📝 Paragraph' }}
+                          </span>
+                          <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">Block #{{ bIdx + 1 }}</span>
+                        </div>
+                        <div class="block-controls">
+                          <button
+                            type="button"
+                            class="btn-block-ctrl"
+                            [disabled]="bIdx === 0"
+                            (click)="moveEditBlock(bIdx, -1)"
+                            title="Move block up"
+                          >▲</button>
+                          <button
+                            type="button"
+                            class="btn-block-ctrl"
+                            [disabled]="bIdx === editBlocks().length - 1"
+                            (click)="moveEditBlock(bIdx, 1)"
+                            title="Move block down"
+                          >▼</button>
+                          <button
+                            type="button"
+                            class="btn-block-ctrl btn-block-delete"
+                            [disabled]="editBlocks().length === 1 && blk.type === 'paragraph' && !blk.text"
+                            (click)="removeEditBlock(bIdx)"
+                            title="Delete this block"
+                          >✕</button>
+                        </div>
+                      </div>
+
+                      @if (blk.type === 'media-text') {
+                        <!-- Alignment Controls -->
+                        <div class="alignment-group">
+                          <span class="alignment-label">Text Alignment:</span>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'left'"
+                            (click)="setEditBlockAlignment(bIdx, 'left')"
+                            title="Image on the Left, Text on the Right"
+                          >
+                            🖼️ Image Left | Text Right 📝
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'right' || !blk.alignment"
+                            (click)="setEditBlockAlignment(bIdx, 'right')"
+                            title="Text on the Left, Image on the Right"
+                          >
+                            📝 Text Left | Image Right 🖼️
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'full'"
+                            (click)="setEditBlockAlignment(bIdx, 'full')"
+                            title="Full width image with text below"
+                          >
+                            🔲 Full Width
+                          </button>
+                        </div>
+
+                        <!-- Image Uploader & Text Layout -->
+                        <div class="media-block-editor-grid">
+                          <div class="media-block-uploader">
+                            <div class="image-uploader-card" style="padding: 0.75rem;">
+                              <div class="image-uploader-controls" style="flex-wrap: wrap;">
+                                <label class="btn-upload-file">
+                                  <span class="upload-sticker">📁</span>
+                                  <span>Choose file</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    (change)="onBlockImageSelected($event, bIdx)"
+                                    style="display: none;"
+                                  />
+                                </label>
+                                <span class="upload-or">or</span>
+                                <input
+                                  type="text"
+                                  [(ngModel)]="blk.imageUrl"
+                                  placeholder="Image URL"
+                                  class="form-input"
+                                  style="flex: 1; min-width: 140px; font-size: 0.85rem;"
+                                />
+                                @if (blk.imageUrl) {
+                                  <button
+                                    type="button"
+                                    class="btn-remove-img"
+                                    (click)="blk.imageUrl = ''"
+                                    title="Remove this image"
+                                  >
+                                    Remove
+                                  </button>
+                                }
+                              </div>
+                              @if (blk.imageUrl) {
+                                <div class="img-preview-box" style="margin-top: 0.5rem;">
+                                  <img [src]="blk.imageUrl" alt="Block image preview" class="img-thumb" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                                  <div class="img-preview-meta">
+                                    <span class="badge-success">Attached</span>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
+
+                          <div class="media-block-text">
+                            <textarea
+                              rows="4"
+                              [(ngModel)]="blk.text"
+                              class="form-input form-textarea"
+                              placeholder="Write or edit the text that accompanies this image..."
+                              style="width: 100%;"
+                            ></textarea>
+                          </div>
+                        </div>
+                      } @else {
+                        <!-- Pure Text Block -->
+                        <textarea
+                          rows="4"
+                          [(ngModel)]="blk.text"
+                          class="form-input form-textarea"
+                          placeholder="Enter paragraph text..."
+                          style="width: 100%;"
+                        ></textarea>
+                      }
+                    </div>
+                  }
+
+                  <div style="display: flex; gap: 0.6rem; margin-top: 0.8rem;">
+                    <button type="button" class="btn-add-block" (click)="addEditBlock('paragraph')">
+                      + Add Text Paragraph
+                    </button>
+                    <button type="button" class="btn-add-block" (click)="addEditBlock('media-text')">
+                      + Add Image & Text Block
+                    </button>
+                  </div>
                 </div>
 
                 @if (editSuccessMsg()) {
@@ -766,32 +916,26 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     }
 
                     <div class="preview-content-layout">
-                      <div class="ph" role="img" aria-label="Page illustration">
-                        @if (editImageUrl) {
-                          <img
-                            [src]="editImageUrl"
-                            alt="{{ editTitle }}"
-                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
-                          />
+                      @for (blk of editBlocks(); track $index) {
+                        @if (blk.type === 'media-text') {
+                          <div class="preview-media-box align-{{ blk.alignment || 'right' }}">
+                            @if (blk.imageUrl) {
+                              <div class="preview-media-img">
+                                <img [src]="blk.imageUrl" alt="Preview illustration" />
+                              </div>
+                            }
+                            <div class="preview-media-text">
+                              <p style="margin: 0;">{{ blk.text }}</p>
+                            </div>
+                          </div>
                         } @else {
-                          <app-icon name="book" [size]="56" />
-                          <span>Image placeholder</span>
-                        }
-                      </div>
-
-                      <div class="ptxt">
-                        @if (getPreviewParagraphs().length > 0) {
-                          @for (para of getPreviewParagraphs(); track $index) {
+                          <div class="preview-block">
                             <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
-                              {{ para }}
+                              {{ blk.text }}
                             </p>
-                          }
-                        } @else {
-                          <p style="color: #94a3b8; font-style: italic;">
-                            No content entered yet for this page.
-                          </p>
+                          </div>
                         }
-                      </div>
+                      }
                     </div>
                   </div>
 
@@ -1196,19 +1340,159 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   ></textarea>
                 </div>
 
-                <!-- Full Text Content -->
+                <!-- Page Content Blocks Builder -->
                 <div class="form-group">
-                  <label for="new-page-content">
-                    Main Page Content:
-                    <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Paragraphs / text displayed on reader page)</span>
-                  </label>
-                  <textarea
-                    id="new-page-content"
-                    rows="8"
-                    [(ngModel)]="newPageContent"
-                    class="form-input form-textarea"
-                    placeholder="Enter page content text or markdown paragraphs..."
-                  ></textarea>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label style="margin-bottom: 0;">
+                      Page Content Blocks:
+                      <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Add paragraphs and images with custom left/right text alignment)</span>
+                    </label>
+                  </div>
+
+                  @for (blk of newPageBlocks(); track $index; let bIdx = $index) {
+                    <div class="block-card">
+                      <div class="block-card-header">
+                        <span class="block-card-title">
+                          @if (blk.type === 'media-text') {
+                            🖼️ Image & Text Block #{{ bIdx + 1 }}
+                          } @else {
+                            📄 Text Paragraph #{{ bIdx + 1 }}
+                          }
+                        </span>
+                        <div class="block-card-actions">
+                          <button
+                            type="button"
+                            class="btn-block-action"
+                            [disabled]="bIdx === 0"
+                            (click)="moveNewPageBlock(bIdx, -1)"
+                            title="Move Up"
+                          >▲</button>
+                          <button
+                            type="button"
+                            class="btn-block-action"
+                            [disabled]="bIdx === newPageBlocks().length - 1"
+                            (click)="moveNewPageBlock(bIdx, 1)"
+                            title="Move Down"
+                          >▼</button>
+                          <button
+                            type="button"
+                            class="btn-block-action btn-block-delete"
+                            [disabled]="newPageBlocks().length <= 1"
+                            (click)="removeNewPageBlock(bIdx)"
+                            title="Delete this block"
+                          >✕</button>
+                        </div>
+                      </div>
+
+                      @if (blk.type === 'media-text') {
+                        <!-- Alignment Controls -->
+                        <div class="alignment-group">
+                          <span class="alignment-label">Text Alignment:</span>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'left'"
+                            (click)="setNewPageBlockAlignment(bIdx, 'left')"
+                            title="Image on the Left, Text on the Right"
+                          >
+                            🖼️ Image Left | Text Right 📝
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'right' || !blk.alignment"
+                            (click)="setNewPageBlockAlignment(bIdx, 'right')"
+                            title="Text on the Left, Image on the Right"
+                          >
+                            📝 Text Left | Image Right 🖼️
+                          </button>
+                          <button
+                            type="button"
+                            class="btn-align"
+                            [class.active]="blk.alignment === 'full'"
+                            (click)="setNewPageBlockAlignment(bIdx, 'full')"
+                            title="Full width image with text below"
+                          >
+                            🔲 Full Width
+                          </button>
+                        </div>
+
+                        <!-- Image Uploader & Text Layout -->
+                        <div class="media-block-editor-grid">
+                          <div class="media-block-uploader">
+                            <div class="image-uploader-card" style="padding: 0.75rem;">
+                              <div class="image-uploader-controls" style="flex-wrap: wrap;">
+                                <label class="btn-upload-file">
+                                  <span class="upload-sticker">📁</span>
+                                  <span>Choose file</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    (change)="onNewPageBlockImageSelected($event, bIdx)"
+                                    style="display: none;"
+                                  />
+                                </label>
+                                <span class="upload-or">or</span>
+                                <input
+                                  type="text"
+                                  [(ngModel)]="blk.imageUrl"
+                                  placeholder="Image URL"
+                                  class="form-input"
+                                  style="flex: 1; min-width: 140px; font-size: 0.85rem;"
+                                />
+                                @if (blk.imageUrl) {
+                                  <button
+                                    type="button"
+                                    class="btn-remove-img"
+                                    (click)="blk.imageUrl = ''"
+                                    title="Remove this image"
+                                  >
+                                    Remove
+                                  </button>
+                                }
+                              </div>
+                              @if (blk.imageUrl) {
+                                <div class="img-preview-box" style="margin-top: 0.5rem;">
+                                  <img [src]="blk.imageUrl" alt="Block image preview" class="img-thumb" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                                  <div class="img-preview-meta">
+                                    <span class="badge-success">Attached</span>
+                                  </div>
+                                </div>
+                              }
+                            </div>
+                          </div>
+
+                          <div class="media-block-text">
+                            <textarea
+                              rows="4"
+                              [(ngModel)]="blk.text"
+                              class="form-input form-textarea"
+                              placeholder="Write or edit the text that accompanies this image..."
+                              style="width: 100%;"
+                            ></textarea>
+                          </div>
+                        </div>
+                      } @else {
+                        <!-- Pure Text Block -->
+                        <textarea
+                          rows="4"
+                          [(ngModel)]="blk.text"
+                          class="form-input form-textarea"
+                          placeholder="Enter paragraph text..."
+                          style="width: 100%;"
+                        ></textarea>
+                      }
+                    </div>
+                  }
+
+                  <div style="display: flex; gap: 0.6rem; margin-top: 0.8rem;">
+                    <button type="button" class="btn-add-block" (click)="addNewPageBlock('paragraph')">
+                      + Add Text Paragraph
+                    </button>
+                    <button type="button" class="btn-add-block" (click)="addNewPageBlock('media-text')">
+                      + Add Image & Text Block
+                    </button>
+                  </div>
                 </div>
 
                 @if (addPageSuccessMsg()) {
@@ -1239,7 +1523,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   <button
                     type="button"
                     class="btn-save"
-                    [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
+                    [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
                     (click)="handleCreatePage()"
                   >
                     {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
@@ -1283,32 +1567,26 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     }
 
                     <div class="preview-content-layout">
-                      <div class="ph" role="img" aria-label="Page illustration">
-                        @if (newPageImageUrl) {
-                          <img
-                            [src]="newPageImageUrl"
-                            alt="{{ newPageTitle }}"
-                            style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
-                          />
+                      @for (blk of newPageBlocks(); track $index) {
+                        @if (blk.type === 'media-text') {
+                          <div class="preview-media-box align-{{ blk.alignment || 'right' }}">
+                            @if (blk.imageUrl) {
+                              <div class="preview-media-img">
+                                <img [src]="blk.imageUrl" alt="Preview illustration" />
+                              </div>
+                            }
+                            <div class="preview-media-text">
+                              <p style="margin: 0;">{{ blk.text }}</p>
+                            </div>
+                          </div>
                         } @else {
-                          <app-icon name="book" [size]="56" />
-                          <span>Image placeholder</span>
-                        }
-                      </div>
-
-                      <div class="ptxt">
-                        @if (getNewPageParagraphs().length > 0) {
-                          @for (para of getNewPageParagraphs(); track $index) {
+                          <div class="preview-block">
                             <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
-                              {{ para }}
+                              {{ blk.text }}
                             </p>
-                          }
-                        } @else {
-                          <p style="color: #94a3b8; font-style: italic;">
-                            No content entered yet for this page.
-                          </p>
+                          </div>
                         }
-                      </div>
+                      }
                     </div>
                   </div>
 
@@ -1326,7 +1604,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     <button
                       type="button"
                       class="btn-save btn-publish-live"
-                      [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
+                      [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
                       (click)="handleCreatePage()"
                     >
                       {{ creatingPage() ? 'Publishing...' : 'Create & Publish Live' }}
@@ -1711,10 +1989,198 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
       }
       .preview-content-layout {
         display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      .preview-block {
+        width: 100%;
+      }
+      .preview-media-box {
+        display: flex;
         gap: 1.4rem;
         align-items: flex-start;
-        border-left: 3px solid var(--blue, #003399);
-        padding-left: 1.1rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.1rem;
+      }
+      .preview-media-box.align-left {
+        flex-direction: row;
+      }
+      .preview-media-box.align-right {
+        flex-direction: row-reverse;
+      }
+      .preview-media-box.align-full {
+        flex-direction: column;
+      }
+      .preview-media-img {
+        width: 220px;
+        min-width: 220px;
+        max-width: 40%;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .preview-media-box.align-full .preview-media-img {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        max-height: 320px;
+      }
+      .preview-media-img img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 6px;
+        object-fit: cover;
+      }
+      .preview-media-text {
+        flex: 1;
+        font-size: 0.96rem;
+        line-height: 1.6;
+        color: #334155;
+      }
+
+      /* Content Blocks Editor Styles */
+      .content-blocks-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+      }
+      .content-blocks-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1a1a1a;
+      }
+      .content-blocks-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+      .btn-add-block {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #00143c;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .btn-add-block:hover {
+        background: #FFB81C;
+        border-color: #e5a414;
+      }
+      .block-card {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+        transition: border-color 0.15s;
+      }
+      .block-card:hover {
+        border-color: #94a3b8;
+      }
+      .block-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .block-badge {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .block-badge.badge-media {
+        background: #FFF4DD;
+        color: #b45309;
+      }
+      .block-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .btn-block-ctrl {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        cursor: pointer;
+      }
+      .btn-block-ctrl:hover:not(:disabled) {
+        background: #FFB81C;
+        color: #1a1a1a;
+      }
+      .btn-block-ctrl:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      .btn-block-delete {
+        background: #fff;
+        border: 1px solid #fca5a5;
+        color: #dc2626;
+      }
+      .btn-block-delete:hover {
+        background: #fef2f2 !important;
+        border-color: #ef4444 !important;
+      }
+      .alignment-group {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .alignment-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-right: 0.3rem;
+      }
+      .btn-align {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        background: #ffffff;
+        color: #475569;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .btn-align.active {
+        background: #00143c;
+        border-color: #00143c;
+        color: #ffffff;
+      }
+      .media-block-editor-grid {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      .media-block-uploader {
+        width: 45%;
+        min-width: 200px;
+      }
+      .media-block-text {
+        flex: 1;
       }
 
       .form-success {
@@ -1943,6 +2409,7 @@ export class HomeComponent implements OnInit {
   editOverview = '';
   editContentText = '';
   editImageUrl = '';
+  editBlocks = signal<ContentBlock[]>([]);
   editTab = signal<'edit' | 'preview'>('edit');
   loadingSectionEdit = signal(false);
   savingEdit = signal(false);
@@ -1983,6 +2450,7 @@ export class HomeComponent implements OnInit {
   newPageOverview = '';
   newPageContent = '';
   newPageImageUrl = '';
+  newPageBlocks = signal<ContentBlock[]>([]);
   creatingPage = signal(false);
   addPageErrorMsg = signal('');
   addPageSuccessMsg = signal('');
@@ -2331,6 +2799,177 @@ export class HomeComponent implements OnInit {
     await this.loadSectionDataForEdit(id);
   }
 
+  parseRawToBlocks(rawText: string): ContentBlock[] {
+    if (!rawText || !rawText.trim()) {
+      return [{ type: 'paragraph', text: '' }];
+    }
+    const blocks: ContentBlock[] = [];
+    const chunks = rawText.split(/\n\s*\n/);
+    for (const chunk of chunks) {
+      const trimmed = chunk.trim();
+      if (!trimmed) continue;
+
+      const mediaMatch = trimmed.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
+      if (mediaMatch) {
+        blocks.push({
+          type: 'media-text',
+          alignment: mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full',
+          imageUrl: mediaMatch[2].trim(),
+          text: (mediaMatch[3] || '').trim(),
+        });
+        continue;
+      }
+
+      const mdMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)(?:\s*([\s\S]*))?$/);
+      if (mdMatch) {
+        blocks.push({
+          type: 'media-text',
+          alignment: 'right',
+          imageUrl: mdMatch[2].trim(),
+          caption: mdMatch[1].trim(),
+          text: (mdMatch[3] || '').trim(),
+        });
+        continue;
+      }
+
+      blocks.push({
+        type: 'paragraph',
+        text: trimmed,
+      });
+    }
+
+    return blocks.length > 0 ? blocks : [{ type: 'paragraph', text: '' }];
+  }
+
+  serializeBlocksToRaw(blocks: ContentBlock[]): string {
+    if (!blocks || blocks.length === 0) return '';
+    return blocks
+      .map((b) => {
+        if (b.type === 'media-text') {
+          const align = b.alignment || 'right';
+          const img = (b.imageUrl || '').trim();
+          const txt = (b.text || '').trim();
+          if (img) {
+            return `[media:${align}|${img}]\n${txt}`.trim();
+          }
+          return txt;
+        }
+        return (b.text || '').trim();
+      })
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  // --- Block Editing Helper Actions ---
+
+  addEditBlock(type: 'paragraph' | 'media-text') {
+    this.editBlocks.update((list) => [
+      ...list,
+      type === 'paragraph'
+        ? { type: 'paragraph', text: '' }
+        : { type: 'media-text', alignment: 'right', imageUrl: '', text: '' },
+    ]);
+  }
+
+  removeEditBlock(index: number) {
+    this.editBlocks.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  moveEditBlock(index: number, direction: -1 | 1) {
+    const list = [...this.editBlocks()];
+    const target = index + direction;
+    if (target < 0 || target >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(target, 0, moved);
+    this.editBlocks.set(list);
+  }
+
+  setEditBlockAlignment(index: number, align: 'left' | 'right' | 'full') {
+    this.editBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], alignment: align };
+      }
+      return copy;
+    });
+  }
+
+  onBlockImageSelected(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Selected image is too large. Please select an image under 15MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.editBlocks.update((list) => {
+        const copy = [...list];
+        if (copy[index]) {
+          copy[index] = { ...copy[index], imageUrl: reader.result as string };
+        }
+        return copy;
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // --- Add Page Block Helper Actions ---
+
+  addNewPageBlock(type: 'paragraph' | 'media-text') {
+    this.newPageBlocks.update((list) => [
+      ...list,
+      type === 'paragraph'
+        ? { type: 'paragraph', text: '' }
+        : { type: 'media-text', alignment: 'right', imageUrl: '', text: '' },
+    ]);
+  }
+
+  removeNewPageBlock(index: number) {
+    this.newPageBlocks.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  moveNewPageBlock(index: number, direction: -1 | 1) {
+    const list = [...this.newPageBlocks()];
+    const target = index + direction;
+    if (target < 0 || target >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(target, 0, moved);
+    this.newPageBlocks.set(list);
+  }
+
+  setNewPageBlockAlignment(index: number, align: 'left' | 'right' | 'full') {
+    this.newPageBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], alignment: align };
+      }
+      return copy;
+    });
+  }
+
+  onNewPageBlockImageSelected(event: Event, index: number) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Selected image is too large. Please select an image under 15MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.newPageBlocks.update((list) => {
+        const copy = [...list];
+        if (copy[index]) {
+          copy[index] = { ...copy[index], imageUrl: reader.result as string };
+        }
+        return copy;
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
   async loadSectionDataForEdit(id: string) {
     this.loadingSectionEdit.set(true);
     this.editSuccessMsg.set('');
@@ -2340,7 +2979,14 @@ export class HomeComponent implements OnInit {
       this.editTitle = art.title || '';
       this.editOverview = art.overview || '';
       this.editImageUrl = art.imageUrl || '';
-      this.editContentText = art.content.map((b) => b.text || '').join('\n\n');
+      const raw = art.content.map((b) => {
+        if (b.type === 'media-text') {
+          return `[media:${b.alignment || 'right'}|${b.imageUrl || ''}]\n${b.text || ''}`.trim();
+        }
+        return b.text || '';
+      }).filter(Boolean).join('\n\n');
+      this.editContentText = raw;
+      this.editBlocks.set(this.parseRawToBlocks(raw));
     } catch (err: any) {
       this.editErrorMsg.set('Failed to load section data.');
     } finally {
@@ -2371,17 +3017,10 @@ export class HomeComponent implements OnInit {
     this.editImageUrl = '';
   }
 
-  getPreviewParagraphs(): string[] {
-    if (!this.editContentText) return [];
-    return this.editContentText
-      .split(/\n\s*\n/)
-      .map((p) => p.trim())
-      .filter(Boolean);
-  }
-
   getPreviewWordCount(): number {
-    if (!this.editContentText) return 0;
-    return this.editContentText.trim().split(/\s+/).filter(Boolean).length;
+    const raw = this.serializeBlocksToRaw(this.editBlocks());
+    if (!raw) return 0;
+    return raw.trim().split(/\s+/).filter(Boolean).length;
   }
 
   async handleSaveContentEdit() {
@@ -2392,12 +3031,15 @@ export class HomeComponent implements OnInit {
     this.editSuccessMsg.set('');
     this.editErrorMsg.set('');
 
+    const finalContent = this.serializeBlocksToRaw(this.editBlocks());
+    this.editContentText = finalContent;
+
     try {
       await this.manualService.saveContentEdit({
         id: subId,
         title: this.editTitle,
         overview: this.editOverview,
-        content: this.editContentText,
+        content: finalContent,
         imageUrl: this.editImageUrl,
       });
 
@@ -2651,6 +3293,7 @@ export class HomeComponent implements OnInit {
     this.newPageOverview = '';
     this.newPageContent = '';
     this.newPageImageUrl = '';
+    this.newPageBlocks.set([{ type: 'paragraph', text: '' }]);
     this.addPageErrorMsg.set('');
     this.addPageSuccessMsg.set('');
 
@@ -2662,16 +3305,24 @@ export class HomeComponent implements OnInit {
   }
 
   getNewPageParagraphs(): string[] {
-    if (!this.newPageContent) return [];
-    return this.newPageContent
+    const raw = this.serializeBlocksToRaw(this.newPageBlocks());
+    if (!raw) return [];
+    return raw
       .split(/\n\s*\n/)
       .map((p) => p.trim())
       .filter(Boolean);
   }
 
   getNewPageWordCount(): number {
-    if (!this.newPageContent) return 0;
-    return this.newPageContent.trim().split(/\s+/).filter(Boolean).length;
+    const raw = this.serializeBlocksToRaw(this.newPageBlocks());
+    if (!raw) return 0;
+    return raw.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  hasNewPageContent(): boolean {
+    return this.newPageBlocks().some(
+      (b) => (b.text && b.text.trim().length > 0) || (b.imageUrl && b.imageUrl.trim().length > 0)
+    );
   }
 
   closeAddPageModal() {
@@ -2695,7 +3346,7 @@ export class HomeComponent implements OnInit {
 
   async handleCreatePage() {
     const title = this.newPageTitle.trim();
-    const content = this.newPageContent.trim();
+    const content = this.serializeBlocksToRaw(this.newPageBlocks()).trim() || this.newPageContent.trim();
     const topicId = Number(this.newPageTopicId);
 
     if (!topicId || isNaN(topicId)) {

@@ -472,6 +472,40 @@ export class ManualService {
         });
         continue;
       }
+      // Check for custom media-text blocks: [media:alignment|url]
+      const mediaMatch = line.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*(.*))?$/i);
+      if (mediaMatch) {
+        flushParagraph();
+        flushList();
+        const align = (mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full');
+        const imgUrl = mediaMatch[2].trim();
+        const inlineTxt = (mediaMatch[3] || '').trim();
+        blocks.push({
+          type: 'media-text',
+          imageUrl: imgUrl,
+          alignment: align,
+          text: inlineTxt,
+        });
+        continue;
+      }
+
+      // Standard markdown image: ![alt](url)
+      const mdImgMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)(?:\s*(.*))?$/);
+      if (mdImgMatch) {
+        flushParagraph();
+        flushList();
+        const caption = mdImgMatch[1].trim();
+        const imgUrl = mdImgMatch[2].trim();
+        const restTxt = (mdImgMatch[3] || '').trim();
+        blocks.push({
+          type: 'media-text',
+          imageUrl: imgUrl,
+          alignment: 'right',
+          caption,
+          text: restTxt,
+        });
+        continue;
+      }
 
       if (currentList.length > 0) {
         flushList();

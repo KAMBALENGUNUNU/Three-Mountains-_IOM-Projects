@@ -135,6 +135,34 @@ import { IconComponent } from '../icon/icon.component';
                       <li style="margin-bottom: 0.5rem;">{{ item }}</li>
                     }
                   </ul>
+                } @else if (block.type === 'media-text') {
+                  <div
+                    class="block {{ block.alignment === 'left' ? 'left' : block.alignment === 'full' ? 'full-media' : 'right' }} {{ tintClass() }}"
+                    style="margin-bottom: 2rem;"
+                  >
+                    <div class="ph" role="img" [attr.aria-label]="block.caption || 'Section illustration'">
+                      @if (block.imageUrl) {
+                        <img
+                          [src]="block.imageUrl"
+                          alt="{{ block.caption || art.title }}"
+                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                        />
+                      } @else {
+                        <app-icon [name]="iconName()" [size]="56" />
+                        <span>Image placeholder</span>
+                      }
+                    </div>
+                    <div class="btxt">
+                      @if (block.text) {
+                        <p>{{ block.text }}</p>
+                      }
+                      @if (block.caption) {
+                        <small style="display: block; margin-top: 0.4rem; color: #64748b; font-style: italic;">
+                          {{ block.caption }}
+                        </small>
+                      }
+                    </div>
+                  </div>
                 } @else {
                   <div
                     class="block {{ idx % 2 === 0 ? 'left' : 'right' }} {{ tintClass() }}"
