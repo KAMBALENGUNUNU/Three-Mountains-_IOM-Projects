@@ -234,6 +234,55 @@ public class ManualServiceImpl implements ManualService {
         }
     }
 
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public TopicDTO createTopic(CreateTopicRequestDTO request) {
+        int topicNum = (request.topicNumber() != null) ? request.topicNumber() : (int) (topicRepository.count());
+        String imageUrl = (request.imageUrl() != null && !request.imageUrl().isBlank()) ? request.imageUrl().trim() : null;
+        Topic topic = new Topic(topicNum, request.title().trim(), imageUrl);
+
+        SubTopic defaultSubTopic = new SubTopic(1, request.title().trim(), topic);
+        topic.addSubTopic(defaultSubTopic);
+
+        Topic saved = topicRepository.save(topic);
+        return toTopicDTO(saved);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public SectionDTO createPageUnderTopic(Long topicId, CreateSectionRequestDTO request) {
+        Topic topic = topicRepository.findById(topicId)
+                .orElseThrow(() -> new EntityNotFoundException("Topic not found with id: " + topicId));
+
+        SubTopic subTopic;
+        if (topic.getSubTopics().isEmpty()) {
+            subTopic = new SubTopic(1, topic.getTitle(), topic);
+            topic.addSubTopic(subTopic);
+            subTopic = subTopicRepository.save(subTopic);
+        } else {
+            subTopic = topic.getSubTopics().get(0);
+        }
+
+        String overview = (request.overview() != null && !request.overview().isBlank()) ? request.overview().trim() : null;
+        String imageUrl = (request.imageUrl() != null && !request.imageUrl().isBlank()) ? request.imageUrl().trim() : null;
+        int nextOrder = subTopic.getSections().size() + 1;
+
+        Section section = new Section(request.title().trim(), request.content().trim(), overview, imageUrl, subTopic);
+        section.setOrderIndex(nextOrder);
+        subTopic.addSection(section);
+        Section saved = sectionRepository.save(section);
+
+        try {
+            luceneIndexService.updateSectionIndex(saved);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to index new section: " + saved.getId(), e);
+        }
+
+        return toSectionDTO(saved);
+    }
+
     // ------------------------------------------------------------------ //
     //  Mapping helpers
     // ------------------------------------------------------------------ //

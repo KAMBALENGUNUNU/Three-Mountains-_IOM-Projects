@@ -162,6 +162,33 @@ public class AdminController {
     // ------------------------------------------------------------------ //
 
     @Operation(
+            summary = "Create a new top-level section (topic)",
+            description = "ADMIN only. Creates a new section (topic) and an initial subtopic."
+    )
+    @PostMapping("/topics")
+    public ResponseEntity<ApiResponse<TopicDTO>> createTopic(
+            @Valid @RequestBody CreateTopicRequestDTO request) {
+
+        TopicDTO created = manualService.createTopic(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Section created successfully", created));
+    }
+
+    @Operation(
+            summary = "Create a new page (section) under a topic",
+            description = "ADMIN only. Creates a new page under the specified topic's primary subtopic and indexes it."
+    )
+    @PostMapping("/topics/{topicId}/sections")
+    public ResponseEntity<ApiResponse<SectionDTO>> createPageUnderTopic(
+            @PathVariable Long topicId,
+            @Valid @RequestBody CreateSectionRequestDTO request) {
+
+        SectionDTO created = manualService.createPageUnderTopic(topicId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Page created successfully", created));
+    }
+
+    @Operation(
             summary = "Update a top-level topic",
             description = "ADMIN only. Modifies a topic's title and/or ordering number."
     )

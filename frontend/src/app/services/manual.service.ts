@@ -643,6 +643,33 @@ export class ManualService {
     return { ok: true };
   }
 
+  async createNewSection(payload: { title: string; imageUrl?: string | null }): Promise<{ ok: boolean; data?: any }> {
+    const res = await firstValueFrom(
+      this.http.post<any>(`${API_BASE_URL}/admin/topics`, {
+        title: payload.title,
+        imageUrl: payload.imageUrl ?? '',
+      }),
+    );
+    this.cachedTree = null;
+    return { ok: true, data: res?.data };
+  }
+
+  async createNewPage(
+    topicId: number,
+    payload: { title: string; content: string; overview?: string; imageUrl?: string | null },
+  ): Promise<{ ok: boolean; data?: any }> {
+    const res = await firstValueFrom(
+      this.http.post<any>(`${API_BASE_URL}/admin/topics/${topicId}/sections`, {
+        title: payload.title,
+        content: payload.content,
+        overview: payload.overview,
+        imageUrl: payload.imageUrl ?? '',
+      }),
+    );
+    this.cachedTree = null;
+    return { ok: true, data: res?.data };
+  }
+
   clearCache(): void {
     this.cachedTree = null;
   }

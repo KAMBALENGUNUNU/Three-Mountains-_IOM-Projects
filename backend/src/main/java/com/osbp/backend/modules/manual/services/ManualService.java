@@ -95,4 +95,21 @@ public interface ManualService {
      * @param sectionIds list of section IDs in their desired order
      */
     void reorderSections(java.util.List<Long> sectionIds);
+
+    /**
+     * Creates a new top-level topic (section) and an initial subtopic.
+     *
+     * @param request the topic creation payload
+     * @return the created {@link com.osbp.backend.modules.manual.dtos.TopicDTO}
+     */
+    com.osbp.backend.modules.manual.dtos.TopicDTO createTopic(com.osbp.backend.modules.manual.dtos.CreateTopicRequestDTO request);
+
+    /**
+     * Creates a new page (section) under a specified top-level topic.
+     *
+     * @param topicId the topic ID
+     * @param request the section creation payload
+     * @return the created {@link com.osbp.backend.modules.manual.dtos.SectionDTO}
+     */
+    com.osbp.backend.modules.manual.dtos.SectionDTO createPageUnderTopic(Long topicId, com.osbp.backend.modules.manual.dtos.CreateSectionRequestDTO request);
 }

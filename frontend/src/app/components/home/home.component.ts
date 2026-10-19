@@ -128,10 +128,20 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <button
                   type="button"
                   class="btn main-action-btn btn-admin-dark"
-                  (click)="notificationService.openAddModal.set(true)"
-                  title="Broadcast notification to all users"
+                  (click)="openAddSectionModal()"
+                  title="Add a new section / module"
                 >
-                  Add Notification
+                  <app-icon name="plus" [size]="14" />
+                  Add Section
+                </button>
+                <button
+                  type="button"
+                  class="btn main-action-btn btn-admin-dark"
+                  (click)="openAddPageModal()"
+                  title="Add a new page inside a section"
+                >
+                  <app-icon name="plus" [size]="14" />
+                  Add Page
                 </button>
               </div>
             }
@@ -943,6 +953,317 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         </div>
       }
 
+      <!-- ============================================================ -->
+      <!-- Add Section Modal Dialog -->
+      <!-- ============================================================ -->
+      @if (addSectionModalOpen()) {
+        <div class="modal-overlay" (click)="closeAddSectionModal()">
+          <div
+            class="modal-card modal-lg"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-section-title"
+          >
+            <!-- Header -->
+            <div class="modal-header">
+              <div>
+                <span class="modal-badge">Section Creator</span>
+                <h2 id="add-section-title" class="modal-title">
+                  Add New Section
+                </h2>
+                <p class="modal-subtitle">
+                  Create a new operational section / module on the main field guide overview.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-close-modal"
+                (click)="closeAddSectionModal()"
+                aria-label="Close section creator dialog"
+              >
+                <app-icon name="close" [size]="14" />
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+              @if (addSectionSuccessMsg()) {
+                <div class="form-success">{{ addSectionSuccessMsg() }}</div>
+              }
+              @if (addSectionErrorMsg()) {
+                <div class="form-error">{{ addSectionErrorMsg() }}</div>
+              }
+
+              <!-- Section Title -->
+              <div class="form-group">
+                <label for="new-section-title">
+                  Section Title:
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(e.g., Section 9: CROSS-BORDER HEALTH PROTOCOLS)</span>
+                </label>
+                <input
+                  id="new-section-title"
+                  type="text"
+                  [(ngModel)]="newSectionTitle"
+                  class="form-input"
+                  placeholder="Enter section title..."
+                />
+              </div>
+
+              <!-- Illustration Image -->
+              <div class="form-group">
+                <label>Section Illustration / Image:</label>
+                <div class="image-uploader-card">
+                  <div class="image-uploader-controls">
+                    <label class="btn-upload-file">
+                      <span class="upload-sticker">📁</span>
+                      <span>Choose image file</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onNewSectionImageSelected($event)"
+                        style="display: none;"
+                      />
+                    </label>
+                    <span class="upload-or">or</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="newSectionImageUrl"
+                      placeholder="Paste Image URL (https://... or data:image...)"
+                      class="form-input"
+                      style="flex: 1; min-width: 220px;"
+                    />
+                    @if (newSectionImageUrl) {
+                      <button
+                        type="button"
+                        class="btn-remove-img"
+                        (click)="newSectionImageUrl = ''"
+                        title="Remove image"
+                      >
+                        Remove image
+                      </button>
+                    }
+                  </div>
+
+                  @if (newSectionImageUrl) {
+                    <div class="img-preview-box">
+                      <img [src]="newSectionImageUrl" alt="Section Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
+                      <div class="img-preview-meta">
+                        <span class="badge-success">Image Attached</span>
+                        <span class="img-preview-hint">This illustration image will be displayed on the section card.</span>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="img-empty-box">
+                      <span>No custom image selected (default section placeholder icon will be used)</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.5rem; gap: 0.8rem;">
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  [disabled]="creatingSection()"
+                  (click)="closeAddSectionModal()"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn-save"
+                  [disabled]="creatingSection() || !newSectionTitle.trim()"
+                  (click)="handleCreateSection()"
+                >
+                  {{ creatingSection() ? 'Creating Section...' : 'Create Section' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ============================================================ -->
+      <!-- Add Page Modal Dialog -->
+      <!-- ============================================================ -->
+      @if (addPageModalOpen()) {
+        <div class="modal-overlay" (click)="closeAddPageModal()">
+          <div
+            class="modal-card modal-lg"
+            (click)="$event.stopPropagation()"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-page-title"
+          >
+            <!-- Header -->
+            <div class="modal-header">
+              <div>
+                <span class="modal-badge">Page Creator</span>
+                <h2 id="add-page-title" class="modal-title">
+                  Add New Page
+                </h2>
+                <p class="modal-subtitle">
+                  Create a new standard operating procedure or curriculum page inside a section.
+                </p>
+              </div>
+              <button
+                type="button"
+                class="btn-close-modal"
+                (click)="closeAddPageModal()"
+                aria-label="Close page creator dialog"
+              >
+                <app-icon name="close" [size]="14" />
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+              @if (addPageSuccessMsg()) {
+                <div class="form-success">{{ addPageSuccessMsg() }}</div>
+              }
+              @if (addPageErrorMsg()) {
+                <div class="form-error">{{ addPageErrorMsg() }}</div>
+              }
+
+              <!-- Target Section -->
+              <div class="form-group">
+                <label for="new-page-section-select">
+                  Select Target Section:
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(The section where this page will appear)</span>
+                </label>
+                <select
+                  id="new-page-section-select"
+                  [(ngModel)]="newPageTopicId"
+                  class="form-input"
+                >
+                  @for (sec of (tree()?.sections || []); track sec.id) {
+                    <option [value]="sec.rawId">{{ sec.title }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Page Title -->
+              <div class="form-group">
+                <label for="new-page-title">
+                  Page Title:
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(e.g., 4.3 Visa Verification Procedures)</span>
+                </label>
+                <input
+                  id="new-page-title"
+                  type="text"
+                  [(ngModel)]="newPageTitle"
+                  class="form-input"
+                  placeholder="Enter page title..."
+                />
+              </div>
+
+              <!-- Brief Overview / Preview -->
+              <div class="form-group">
+                <label for="new-page-overview">
+                  Brief Overview:
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Short summary shown on the main page card accordion)</span>
+                </label>
+                <textarea
+                  id="new-page-overview"
+                  rows="2"
+                  [(ngModel)]="newPageOverview"
+                  class="form-input"
+                  placeholder="Enter brief overview summary..."
+                ></textarea>
+              </div>
+
+              <!-- Page Content -->
+              <div class="form-group">
+                <label for="new-page-content">
+                  Page Content:
+                  <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Full operational text displayed on the reader view)</span>
+                </label>
+                <textarea
+                  id="new-page-content"
+                  rows="7"
+                  [(ngModel)]="newPageContent"
+                  class="form-input form-textarea"
+                  placeholder="Enter page content text or markdown paragraphs..."
+                ></textarea>
+              </div>
+
+              <!-- Page Illustration Image -->
+              <div class="form-group">
+                <label>Page Illustration Image:</label>
+                <div class="image-uploader-card">
+                  <div class="image-uploader-controls">
+                    <label class="btn-upload-file">
+                      <span class="upload-sticker">📁</span>
+                      <span>Choose image file</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        (change)="onNewPageImageSelected($event)"
+                        style="display: none;"
+                      />
+                    </label>
+                    <span class="upload-or">or</span>
+                    <input
+                      type="text"
+                      [(ngModel)]="newPageImageUrl"
+                      placeholder="Paste Image URL (https://... or data:image...)"
+                      class="form-input"
+                      style="flex: 1; min-width: 220px;"
+                    />
+                    @if (newPageImageUrl) {
+                      <button
+                        type="button"
+                        class="btn-remove-img"
+                        (click)="newPageImageUrl = ''"
+                        title="Remove image"
+                      >
+                        Remove image
+                      </button>
+                    }
+                  </div>
+
+                  @if (newPageImageUrl) {
+                    <div class="img-preview-box">
+                      <img [src]="newPageImageUrl" alt="Page Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
+                      <div class="img-preview-meta">
+                        <span class="badge-success">Image Attached</span>
+                        <span class="img-preview-hint">This image will appear on the page overview accordion.</span>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="img-empty-box">
+                      <span>No custom image selected (default page placeholder icon will be used)</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.5rem; gap: 0.8rem;">
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  [disabled]="creatingPage()"
+                  (click)="closeAddPageModal()"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="btn-save"
+                  [disabled]="creatingPage() || !newPageTitle.trim() || !newPageContent.trim() || !newPageTopicId"
+                  (click)="handleCreatePage()"
+                >
+                  {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Admin Modal -->
       <app-admin-modal
         [open]="adminOpen()"
@@ -1571,6 +1892,25 @@ export class HomeComponent implements OnInit {
   draggedSectionIndex: number | null = null;
   draggedPageInfo: { sectionId: string; pageIndex: number } | null = null;
 
+  // Add Section Creator
+  addSectionModalOpen = signal(false);
+  newSectionTitle = '';
+  newSectionImageUrl = '';
+  creatingSection = signal(false);
+  addSectionErrorMsg = signal('');
+  addSectionSuccessMsg = signal('');
+
+  // Add Page Creator
+  addPageModalOpen = signal(false);
+  newPageTopicId: number | null = null;
+  newPageTitle = '';
+  newPageOverview = '';
+  newPageContent = '';
+  newPageImageUrl = '';
+  creatingPage = signal(false);
+  addPageErrorMsg = signal('');
+  addPageSuccessMsg = signal('');
+
   // Dropdown list computed from tree
   allSubtopicsList = computed(() => {
     const t = this.tree();
@@ -2146,6 +2486,152 @@ export class HomeComponent implements OnInit {
       alert(err?.message || 'Failed to delete section.');
     } finally {
       this.deletingModule.set(false);
+    }
+  }
+
+  // ------------------------------------------------------------------ //
+  //  Add Section Creator Methods
+  // ------------------------------------------------------------------ //
+
+  openAddSectionModal() {
+    this.newSectionTitle = '';
+    this.newSectionImageUrl = '';
+    this.addSectionErrorMsg.set('');
+    this.addSectionSuccessMsg.set('');
+    this.addSectionModalOpen.set(true);
+  }
+
+  closeAddSectionModal() {
+    this.addSectionModalOpen.set(false);
+  }
+
+  onNewSectionImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      this.addSectionErrorMsg.set('Selected image is too large. Please select an image under 15MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.newSectionImageUrl = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async handleCreateSection() {
+    const title = this.newSectionTitle.trim();
+    if (!title) {
+      this.addSectionErrorMsg.set('Section title is required.');
+      return;
+    }
+
+    this.creatingSection.set(true);
+    this.addSectionErrorMsg.set('');
+    this.addSectionSuccessMsg.set('');
+
+    try {
+      await this.manualService.createNewSection({
+        title,
+        imageUrl: this.newSectionImageUrl || null,
+      });
+
+      this.addSectionSuccessMsg.set(`Section "${title}" was created successfully!`);
+      await this.loadTree();
+
+      setTimeout(() => {
+        if (this.addSectionModalOpen()) {
+          this.closeAddSectionModal();
+        }
+      }, 900);
+    } catch (err: any) {
+      this.addSectionErrorMsg.set(err?.message || 'Failed to create section. Ensure you are logged in as admin.');
+    } finally {
+      this.creatingSection.set(false);
+    }
+  }
+
+  // ------------------------------------------------------------------ //
+  //  Add Page Creator Methods
+  // ------------------------------------------------------------------ //
+
+  openAddPageModal() {
+    this.newPageTitle = '';
+    this.newPageOverview = '';
+    this.newPageContent = '';
+    this.newPageImageUrl = '';
+    this.addPageErrorMsg.set('');
+    this.addPageSuccessMsg.set('');
+
+    const sections = this.tree()?.sections || [];
+    const firstSection = sections.find((s) => typeof s.rawId === 'number');
+    this.newPageTopicId = firstSection ? (firstSection.rawId ?? null) : null;
+
+    this.addPageModalOpen.set(true);
+  }
+
+  closeAddPageModal() {
+    this.addPageModalOpen.set(false);
+  }
+
+  onNewPageImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (file.size > 15 * 1024 * 1024) {
+      this.addPageErrorMsg.set('Selected image is too large. Please select an image under 15MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.newPageImageUrl = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async handleCreatePage() {
+    const title = this.newPageTitle.trim();
+    const content = this.newPageContent.trim();
+    const topicId = Number(this.newPageTopicId);
+
+    if (!topicId || isNaN(topicId)) {
+      this.addPageErrorMsg.set('Please select a target section.');
+      return;
+    }
+    if (!title) {
+      this.addPageErrorMsg.set('Page title is required.');
+      return;
+    }
+    if (!content) {
+      this.addPageErrorMsg.set('Page content is required.');
+      return;
+    }
+
+    this.creatingPage.set(true);
+    this.addPageErrorMsg.set('');
+    this.addPageSuccessMsg.set('');
+
+    try {
+      await this.manualService.createNewPage(topicId, {
+        title,
+        content,
+        overview: this.newPageOverview.trim() || undefined,
+        imageUrl: this.newPageImageUrl || null,
+      });
+
+      this.addPageSuccessMsg.set(`Page "${title}" was created successfully and added to the search index!`);
+      await this.loadTree();
+
+      setTimeout(() => {
+        if (this.addPageModalOpen()) {
+          this.closeAddPageModal();
+        }
+      }, 900);
+    } catch (err: any) {
+      this.addPageErrorMsg.set(err?.message || 'Failed to create page. Ensure you are logged in as admin.');
+    } finally {
+      this.creatingPage.set(false);
     }
   }
 }
