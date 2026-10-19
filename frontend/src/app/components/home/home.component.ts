@@ -134,15 +134,6 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   <app-icon name="plus" [size]="14" />
                   Add Section
                 </button>
-                <button
-                  type="button"
-                  class="btn main-action-btn btn-admin-dark"
-                  (click)="openAddPageModal()"
-                  title="Add a new page inside a section"
-                >
-                  <app-icon name="plus" [size]="14" />
-                  Add Page
-                </button>
               </div>
             }
           </div>
@@ -194,14 +185,6 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           </div>
                           <button
                             type="button"
-                            class="btn-add-page-direct"
-                            (click)="openAddPageModal(section); $event.stopPropagation()"
-                            title="Add a new page directly to {{ section.title }}"
-                          >
-                            + Add Page
-                          </button>
-                          <button
-                            type="button"
                             class="btn-edit-module"
                             (click)="openModuleEditor(section); $event.stopPropagation()"
                             title="Edit this section's title and illustration image"
@@ -239,9 +222,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           type="button"
                           class="btn-add-page-inside"
                           (click)="openAddPageModal(section); $event.stopPropagation()"
-                          title="Add a new page to this section"
+                          title="Add a new page to {{ section.title }}"
                         >
-                          + Add Page to Section
+                          + Add Page
                         </button>
                       }
                     </div>
