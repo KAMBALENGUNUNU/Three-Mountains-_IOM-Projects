@@ -104,7 +104,8 @@ public class ManualServiceImpl implements ManualService {
                 .orElseThrow(() -> new EntityNotFoundException("SubTopic not found with id: " + subTopicId));
 
         String overview = (request.overview() != null && !request.overview().isBlank()) ? request.overview().trim() : null;
-        Section section = new Section(request.title(), request.content(), overview, subTopic);
+        String imageUrl = (request.imageUrl() != null && !request.imageUrl().isBlank()) ? request.imageUrl().trim() : null;
+        Section section = new Section(request.title(), request.content(), overview, imageUrl, subTopic);
         subTopic.addSection(section);
         Section saved = sectionRepository.save(section);
 
