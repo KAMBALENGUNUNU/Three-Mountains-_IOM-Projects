@@ -67,7 +67,7 @@ import { IconComponent } from '../icon/icon.component';
           <p class="crumb">{{ art.sectionTitle }} › {{ art.topicTitle }}</p>
 
           <h1 style="margin: 0.2rem 0 0.5rem; line-height: 1.15;">{{ art.title }}</h1>
-          <p class="ref">Official OSBP Manual Section • {{ art.wordCount }} words</p>
+
 
           @if (art.overview) {
             <div

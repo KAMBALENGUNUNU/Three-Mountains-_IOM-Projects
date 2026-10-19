@@ -18,11 +18,6 @@ import { AuthService } from '../../services/auth.service';
         <div
           style="padding: 2rem 2.2rem 1.4rem; border-bottom: 1px solid var(--line); background: var(--card);"
         >
-          <div
-            style="display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--blue); margin-bottom: 0.4rem;"
-          >
-            Three Mountains & IOM
-          </div>
           <h1
             style="font-size: 1.85rem; line-height: 1.2; font-weight: 800; margin: 0 0 0.5rem; letter-spacing: -0.02em;"
           >

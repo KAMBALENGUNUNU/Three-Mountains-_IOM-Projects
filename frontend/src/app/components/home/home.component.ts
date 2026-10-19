@@ -893,13 +893,10 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       Official OSBP Field Guide Page
                     </p>
 
-                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; color: #00143c; line-height: 1.2;">
+                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.8rem; color: #00143c; line-height: 1.2;">
                       {{ editTitle || 'Untitled Page' }}
                     </h1>
 
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1.2rem; font-weight: 600;">
-                      Official OSBP Field Guide Page • ~{{ getPreviewWordCount() }} words
-                    </p>
 
                     @if (editOverview.trim()) {
                       <div class="preview-overview-box">
@@ -1544,13 +1541,10 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                       Official OSBP Field Guide Page
                     </p>
 
-                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.4rem; color: #00143c; line-height: 1.2;">
+                    <h1 style="font-size: 1.85rem; font-weight: 800; margin: 0 0 0.8rem; color: #00143c; line-height: 1.2;">
                       {{ newPageTitle || 'Untitled Page' }}
                     </h1>
 
-                    <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 1.2rem; font-weight: 600;">
-                      Official OSBP Field Guide Page • ~{{ getNewPageWordCount() }} words
-                    </p>
 
                     @if (newPageOverview.trim()) {
                       <div class="preview-overview-box">
