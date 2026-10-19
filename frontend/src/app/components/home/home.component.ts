@@ -1717,7 +1717,7 @@ export class HomeComponent implements OnInit {
     try {
       await this.manualService.updateTopic(mod.rawId, {
         title: this.editModuleTitle.trim(),
-        imageUrl: this.editModuleImageUrl.trim() || undefined,
+        imageUrl: this.editModuleImageUrl ? this.editModuleImageUrl.trim() : '',
         topicNumber: mod.order,
       });
 

@@ -594,12 +594,12 @@ export class ManualService {
 
   async updateTopic(
     id: number,
-    payload: { title: string; imageUrl?: string; topicNumber?: number },
+    payload: { title: string; imageUrl?: string | null; topicNumber?: number },
   ): Promise<{ ok: boolean }> {
     await firstValueFrom(
       this.http.put(`${API_BASE_URL}/admin/topics/${id}`, {
         title: payload.title,
-        imageUrl: payload.imageUrl,
+        imageUrl: payload.imageUrl ?? '',
         topicNumber: payload.topicNumber,
       }),
     );

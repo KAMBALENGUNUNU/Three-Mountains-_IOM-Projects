@@ -147,9 +147,9 @@ public class ManualServiceImpl implements ManualService {
         if (request.title() != null && !request.title().isBlank()) {
             topic.setTitle(request.title().trim());
         }
-        if (request.imageUrl() != null) {
-            topic.setImageUrl(request.imageUrl().trim().isEmpty() ? null : request.imageUrl().trim());
-        }
+        topic.setImageUrl(request.imageUrl() != null && !request.imageUrl().trim().isEmpty()
+                ? request.imageUrl().trim()
+                : null);
         Topic saved = topicRepository.save(topic);
         return toTopicDTO(saved);
     }
