@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnDestroy,
@@ -26,8 +27,49 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
     },
   ],
   template: `
-    <div class="rte-wrapper" [class.focused]="isFocused" (click)="onWrapperClick($event)">
-      <!-- Formatting Toolbar -->
+    <div
+      class="rte-wrapper"
+      [class.focused]="isFocused"
+      [class.rte-fullscreen]="isExpanded"
+      (click)="onWrapperClick($event)"
+    >
+      <!-- Dedicated Header for Fullscreen / Distraction-Free Workspace Mode -->
+      @if (isExpanded) {
+        <div class="rte-fullscreen-header" (mousedown)="$event.preventDefault()">
+          <div class="rte-fullscreen-title-area">
+            <span class="rte-fullscreen-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              Distraction-Free Workspace
+            </span>
+            <span class="rte-fullscreen-hint">Press <kbd>Esc</kbd> or click <strong>Exit Fullscreen</strong> to return</span>
+          </div>
+
+          <div class="rte-fullscreen-actions">
+            <span class="rte-word-count">{{ getWordCount() }} words &bull; {{ getCharCount() }} characters</span>
+            <button
+              type="button"
+              class="rte-fullscreen-close-btn"
+              (click)="toggleExpand()"
+              title="Return to page (Esc)"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 14 10 14 10 20"></polyline>
+                <polyline points="20 10 14 10 14 4"></polyline>
+                <line x1="14" y1="10" x2="21" y2="3"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              <span>Exit Fullscreen</span>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Formatting Toolbar (Fixed at top in fullscreen mode) -->
       <div class="rte-toolbar" role="toolbar" aria-label="Text Formatting Toolbar" (mousedown)="$event.preventDefault()">
         <!-- History: Undo / Redo -->
         <div class="rte-btn-group">
@@ -306,24 +348,58 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
             </div>
           }
         </div>
+
+        <!-- Spacer pushing Expand button to right end -->
+        <div class="rte-toolbar-spacer"></div>
+
+        <!-- Fullscreen / Expand Workspace Button -->
+        <div class="rte-btn-group">
+          <button
+            type="button"
+            class="rte-btn rte-expand-btn"
+            [class.active]="isExpanded"
+            [title]="isExpanded ? 'Exit Fullscreen Workspace (Esc)' : 'Expand to Fullscreen Workspace'"
+            (click)="toggleExpand()"
+          >
+            @if (isExpanded) {
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 14 10 14 10 20"></polyline>
+                <polyline points="20 10 14 10 14 4"></polyline>
+                <line x1="14" y1="10" x2="21" y2="3"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              <span class="rte-expand-label">Exit Fullscreen</span>
+            } @else {
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              <span class="rte-expand-label">Expand</span>
+            }
+          </button>
+        </div>
       </div>
 
-      <!-- Editable Content Surface -->
-      <div
-        #editorSurface
-        class="rte-content"
-        contenteditable="true"
-        role="textbox"
-        aria-multiline="true"
-        [attr.placeholder]="placeholder"
-        (input)="onContentInput()"
-        (blur)="onBlur()"
-        (focus)="onFocus()"
-        (keydown)="onKeyDown($event)"
-        (keyup)="onKeyUp()"
-        (mouseup)="onMouseUp()"
-        (paste)="onPaste($event)"
-      ></div>
+      <!-- Editable Content Surface Area -->
+      <div class="rte-scroll-container">
+        <div
+          #editorSurface
+          class="rte-content"
+          contenteditable="true"
+          role="textbox"
+          aria-multiline="true"
+          [attr.placeholder]="placeholder"
+          (input)="onContentInput()"
+          (blur)="onBlur()"
+          (focus)="onFocus()"
+          (keydown)="onKeyDown($event)"
+          (keyup)="onKeyUp()"
+          (mouseup)="onMouseUp()"
+          (paste)="onPaste($event)"
+        ></div>
+      </div>
 
       <!-- Link Insertion / Editing Modal Modal Dialog -->
       @if (showLinkModal) {
@@ -417,6 +493,102 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       border-color: var(--blue, #0035A0);
       box-shadow: 0 0 0 3px rgba(0, 53, 160, 0.12);
     }
+
+    /* Fullscreen Distraction-Free Workspace Mode */
+    .rte-wrapper.rte-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: none !important;
+      max-height: none !important;
+      z-index: 999999 !important;
+      background: #f1f5f9 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .rte-fullscreen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 24px;
+      background: #00143c;
+      color: #ffffff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .rte-fullscreen-title-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rte-fullscreen-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    .rte-fullscreen-hint {
+      font-size: 0.82rem;
+      color: #94a3b8;
+    }
+    .rte-fullscreen-hint kbd {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.76rem;
+      font-family: inherit;
+      font-weight: 700;
+    }
+    .rte-fullscreen-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .rte-word-count {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+    .rte-fullscreen-close-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #00143c;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+    .rte-fullscreen-close-btn:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+
     .rte-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -427,6 +599,66 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       border-bottom: 1px solid var(--line, #d5dce8);
       border-radius: 8px 8px 0 0;
       user-select: none;
+    }
+
+    .rte-wrapper.rte-fullscreen .rte-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 8px 24px;
+      background: #ffffff;
+      border-bottom: 1px solid #cbd5e1;
+      border-radius: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
+    }
+
+    .rte-toolbar-spacer {
+      flex: 1;
+      min-width: 8px;
+    }
+
+    .rte-expand-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      height: 28px;
+      background: #e2e8f0;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 0.8rem;
+      border-radius: 5px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .rte-expand-btn:hover {
+      background: #cbd5e1;
+      color: #0035A0;
+    }
+    .rte-expand-btn.active {
+      background: #0035A0;
+      color: #ffffff;
+    }
+    .rte-expand-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .rte-scroll-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .rte-wrapper.rte-fullscreen .rte-scroll-container {
+      flex: 1;
+      overflow-y: auto;
+      background: #f1f5f9;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      padding: 2.5rem 1.5rem 6rem;
     }
     .rte-btn-group {
       display: inline-flex;
@@ -528,14 +760,42 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       margin: 3px 0;
     }
     .rte-content {
-      min-height: 120px;
+      min-height: 140px;
       max-height: 480px;
       overflow-y: auto;
-      padding: 12px 14px;
+      padding: 14px 18px;
       font-size: 1rem;
       line-height: 1.65;
       color: var(--ink, #1a1a1a);
       outline: none;
+      box-sizing: border-box;
+    }
+    .rte-wrapper.rte-fullscreen .rte-content {
+      max-width: 920px;
+      width: 100%;
+      min-height: calc(100vh - 220px);
+      max-height: none;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
+      padding: 3.5rem 4rem;
+      font-size: 1.12rem;
+      line-height: 1.8;
+      box-sizing: border-box;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .rte-fullscreen-hint {
+        display: none;
+      }
+      .rte-wrapper.rte-fullscreen .rte-scroll-container {
+        padding: 1rem 0.5rem 4rem;
+      }
+      .rte-wrapper.rte-fullscreen .rte-content {
+        padding: 1.5rem 1.25rem;
+      }
     }
     .rte-content:empty:before {
       content: attr(placeholder);
@@ -631,6 +891,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       justify-content: center;
       padding: 1rem;
       border-radius: 8px;
+    }
+    .rte-wrapper.rte-fullscreen .rte-modal-backdrop {
+      position: fixed !important;
+      z-index: 1000000 !important;
     }
     .rte-modal-dialog {
       background: #ffffff;
@@ -741,6 +1005,56 @@ export class RichTextEditorComponent implements OnInit, OnChanges, OnDestroy, Co
   private onChange: (val: string) => void = () => {};
   private onTouched: () => void = () => {};
 
+  isExpanded = false;
+
+  toggleExpand(): void {
+    this.isExpanded = !this.isExpanded;
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = this.isExpanded ? 'hidden' : '';
+    }
+    setTimeout(() => {
+      this.editorSurface?.nativeElement.focus();
+    }, 50);
+  }
+
+  getWordCount(): number {
+    if (!this.editorSurface?.nativeElement) return 0;
+    const text = this.editorSurface.nativeElement.innerText || '';
+    const trimmed = text.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).filter(Boolean).length;
+  }
+
+  getCharCount(): number {
+    if (!this.editorSurface?.nativeElement) return 0;
+    const text = this.editorSurface.nativeElement.innerText || '';
+    return text.length;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  handleGlobalKeydown(event: KeyboardEvent): void {
+    if (this.isExpanded && event.key === 'Escape') {
+      if (this.showLinkModal) {
+        this.closeLinkModal();
+        event.preventDefault();
+        return;
+      }
+      if (this.showTableModal) {
+        this.showTableModal = false;
+        event.preventDefault();
+        return;
+      }
+      if (this.showTableMenu || this.showMoreMenu) {
+        this.showTableMenu = false;
+        this.showMoreMenu = false;
+        event.preventDefault();
+        return;
+      }
+      this.toggleExpand();
+      event.preventDefault();
+    }
+  }
+
   ngOnInit() {
     this.updateSurfaceHtml(this.value);
   }
@@ -755,7 +1069,9 @@ export class RichTextEditorComponent implements OnInit, OnChanges, OnDestroy, Co
   }
 
   ngOnDestroy() {
-    // cleanup
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
   }
 
   // --- ControlValueAccessor ---
@@ -787,7 +1103,11 @@ export class RichTextEditorComponent implements OnInit, OnChanges, OnDestroy, Co
       return;
     }
     const target = event.target as HTMLElement;
-    if (!target.closest('.rte-toolbar') && !target.closest('.rte-modal-dialog')) {
+    if (
+      !target.closest('.rte-toolbar') &&
+      !target.closest('.rte-modal-dialog') &&
+      !target.closest('.rte-fullscreen-header')
+    ) {
       this.editorSurface.nativeElement.focus();
     }
   }

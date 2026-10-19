@@ -2146,15 +2146,18 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       }
       .media-block-editor-grid {
         display: flex;
-        gap: 1rem;
+        gap: 1.25rem;
         align-items: flex-start;
+        flex-wrap: wrap;
       }
       .media-block-uploader {
-        width: 45%;
+        width: 32%;
         min-width: 200px;
+        max-width: 280px;
       }
       .media-block-text {
         flex: 1;
+        min-width: 280px;
       }
 
       .form-success {
