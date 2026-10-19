@@ -912,11 +912,116 @@ button {
   display: block;
 }
 
-.reader-text-paragraph p {
-  margin: 0;
+.reader-text-paragraph p,
+.reader-rich-content p,
+.preview-rich-content p {
+  margin: 0 0 0.85rem;
   font-size: 1.05rem;
   line-height: 1.7;
   color: var(--ink);
+}
+
+.reader-rich-content h2,
+.preview-rich-content h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 1.4rem 0 0.5rem;
+  color: #00143c;
+  line-height: 1.25;
+}
+
+.reader-rich-content h3,
+.preview-rich-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.2rem 0 0.4rem;
+  color: #00143c;
+}
+
+.reader-rich-content h4,
+.preview-rich-content h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 1rem 0 0.35rem;
+  color: #00143c;
+}
+
+.reader-rich-content ul,
+.preview-rich-content ul,
+.reader-rich-content ol,
+.preview-rich-content ol {
+  margin: 0.6rem 0 1rem;
+  padding-left: 1.8rem;
+  color: var(--ink);
+}
+
+.reader-rich-content li,
+.preview-rich-content li {
+  margin-bottom: 0.35rem;
+  line-height: 1.6;
+}
+
+.reader-rich-content blockquote,
+.preview-rich-content blockquote {
+  margin: 1.2rem 0;
+  padding: 0.8rem 1.2rem;
+  background: var(--blue-soft, #D9E0F1);
+  border-left: 4px solid var(--blue, #0035A0);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: #1e293b;
+}
+
+.reader-rich-content table,
+.preview-rich-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.4rem 0;
+  font-size: 0.94rem;
+  border: 1px solid var(--line, #cbd5e1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.reader-rich-content th,
+.preview-rich-content th,
+.reader-rich-content td,
+.preview-rich-content td {
+  border: 1px solid var(--line, #cbd5e1);
+  padding: 0.65rem 0.95rem;
+  text-align: left;
+}
+
+.reader-rich-content th,
+.preview-rich-content th {
+  background: var(--blue, #0035A0);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.reader-rich-content tr:nth-child(even),
+.preview-rich-content tr:nth-child(even) {
+  background: rgba(0, 53, 160, 0.03);
+}
+
+.reader-rich-content a,
+.preview-rich-content a {
+  color: var(--blue, #0035A0);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.reader-rich-content a:hover,
+.preview-rich-content a:hover {
+  color: var(--blue-dark, #00287A);
+}
+
+.reader-rich-content hr,
+.preview-rich-content hr {
+  border: 0;
+  height: 1px;
+  background: var(--line, #d5dce8);
+  margin: 1.5rem 0;
 }
 
 .page h2 {

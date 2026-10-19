@@ -8,11 +8,12 @@ import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
 import { IconComponent } from '../icon/icon.component';
 import { AdminModalComponent } from '../admin-modal/admin-modal.component';
+import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, IconComponent, AdminModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, IconComponent, AdminModalComponent, RichTextEditorComponent],
   template: `
     @if (loading()) {
       <div
@@ -797,24 +798,18 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           </div>
 
                           <div class="media-block-text">
-                            <textarea
-                              rows="4"
+                            <app-rich-text-editor
                               [(ngModel)]="blk.text"
-                              class="form-input form-textarea"
-                              placeholder="Write or edit the text that accompanies this image..."
-                              style="width: 100%;"
-                            ></textarea>
+                              placeholder="Write or edit the formatted text that accompanies this image..."
+                            ></app-rich-text-editor>
                           </div>
                         </div>
                       } @else {
-                        <!-- Pure Text Block -->
-                        <textarea
-                          rows="4"
+                        <!-- Pure Text Block (Rich Text Editor) -->
+                        <app-rich-text-editor
                           [(ngModel)]="blk.text"
-                          class="form-input form-textarea"
-                          placeholder="Enter paragraph text..."
-                          style="width: 100%;"
-                        ></textarea>
+                          placeholder="Enter formatted paragraph text, headings, lists, tables or links..."
+                        ></app-rich-text-editor>
                       }
                     </div>
                   }
@@ -917,14 +912,12 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                               </div>
                             }
                             <div class="preview-media-text">
-                              <p style="margin: 0;">{{ blk.text }}</p>
+                              <div class="preview-rich-content" [innerHTML]="blk.text || ''"></div>
                             </div>
                           </div>
                         } @else {
                           <div class="preview-block">
-                            <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
-                              {{ blk.text }}
-                            </p>
+                            <div class="preview-rich-content" [innerHTML]="blk.text || ''"></div>
                           </div>
                         }
                       }
@@ -1455,24 +1448,18 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                           </div>
 
                           <div class="media-block-text">
-                            <textarea
-                              rows="4"
+                            <app-rich-text-editor
                               [(ngModel)]="blk.text"
-                              class="form-input form-textarea"
-                              placeholder="Write or edit the text that accompanies this image..."
-                              style="width: 100%;"
-                            ></textarea>
+                              placeholder="Write or edit the formatted text that accompanies this image..."
+                            ></app-rich-text-editor>
                           </div>
                         </div>
                       } @else {
-                        <!-- Pure Text Block -->
-                        <textarea
-                          rows="4"
+                        <!-- Pure Text Block (Rich Text Editor) -->
+                        <app-rich-text-editor
                           [(ngModel)]="blk.text"
-                          class="form-input form-textarea"
-                          placeholder="Enter paragraph text..."
-                          style="width: 100%;"
-                        ></textarea>
+                          placeholder="Enter formatted paragraph text, headings, lists, tables or links..."
+                        ></app-rich-text-editor>
                       }
                     </div>
                   }
@@ -1565,14 +1552,12 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                               </div>
                             }
                             <div class="preview-media-text">
-                              <p style="margin: 0;">{{ blk.text }}</p>
+                              <div class="preview-rich-content" [innerHTML]="blk.text || ''"></div>
                             </div>
                           </div>
                         } @else {
                           <div class="preview-block">
-                            <p style="margin: 0 0 0.9rem; font-size: 0.98rem; line-height: 1.65; color: #334155;">
-                              {{ blk.text }}
-                            </p>
+                            <div class="preview-rich-content" [innerHTML]="blk.text || ''"></div>
                           </div>
                         }
                       }

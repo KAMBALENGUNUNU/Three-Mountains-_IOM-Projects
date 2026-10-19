@@ -167,7 +167,7 @@ import { IconComponent } from '../icon/icon.component';
                     }
                     <div class="btxt">
                       @if (block.text) {
-                        <p style="margin: 0; font-size: 1.05rem; line-height: 1.7; color: var(--ink);">{{ block.text }}</p>
+                        <div class="reader-rich-content" [innerHTML]="block.text"></div>
                       }
                       @if (block.caption) {
                         <small style="display: block; margin-top: 0.4rem; color: #64748b; font-style: italic;">
@@ -178,7 +178,7 @@ import { IconComponent } from '../icon/icon.component';
                   </div>
                 } @else {
                   <div class="reader-text-paragraph">
-                    <p>{{ block.text }}</p>
+                    <div class="reader-rich-content" [innerHTML]="block.text || ''"></div>
                   </div>
                 }
               }

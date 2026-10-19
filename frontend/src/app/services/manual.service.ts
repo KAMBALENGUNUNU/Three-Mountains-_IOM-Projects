@@ -303,6 +303,33 @@ export class ManualService {
       ];
     }
 
+    // If rawText was edited via Rich Text Editor and contains HTML elements or media blocks, parse cleanly
+    if (/<(p|h[1-6]|table|ul|ol|blockquote|div|strong|b|em|i|u|s|a)\b/i.test(rawText)) {
+      const chunks = rawText.split(/\n\s*\n/);
+      const htmlBlocks: ContentBlock[] = [];
+      for (const chunk of chunks) {
+        const trimmed = chunk.trim();
+        if (!trimmed) continue;
+        const mediaMatch = trimmed.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
+        if (mediaMatch) {
+          htmlBlocks.push({
+            type: 'media-text',
+            alignment: mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full',
+            imageUrl: mediaMatch[2].trim(),
+            text: (mediaMatch[3] || '').trim(),
+          });
+          continue;
+        }
+        htmlBlocks.push({
+          type: 'paragraph',
+          text: trimmed,
+        });
+      }
+      if (htmlBlocks.length > 0) {
+        return htmlBlocks;
+      }
+    }
+
     const cleanedText = this.cleanPdfArtifacts(rawText);
 
     if (title.toLowerCase().includes('acronym')) {
