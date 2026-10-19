@@ -52,6 +52,40 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
         this.luceneIndexService = luceneIndexService;
     }
 
+    private Directory cachedDirectory;
+    private DirectoryReader cachedReader;
+
+    private synchronized DirectoryReader acquireReader() throws Exception {
+        java.nio.file.Path path = Paths.get(indexPath);
+        if (!Files.exists(path)) {
+            return null;
+        }
+        if (cachedDirectory == null) {
+            cachedDirectory = FSDirectory.open(path);
+        }
+        if (!DirectoryReader.indexExists(cachedDirectory)) {
+            return null;
+        }
+        if (cachedReader == null) {
+            cachedReader = DirectoryReader.open(cachedDirectory);
+        } else {
+            DirectoryReader newReader = DirectoryReader.openIfChanged(cachedReader);
+            if (newReader != null) {
+                cachedReader.close();
+                cachedReader = newReader;
+            }
+        }
+        return cachedReader;
+    }
+
+    @jakarta.annotation.PreDestroy
+    public synchronized void close() {
+        try {
+            if (cachedReader != null) cachedReader.close();
+            if (cachedDirectory != null) cachedDirectory.close();
+        } catch (Exception ignored) {}
+    }
+
     @Override
     public List<SearchHitDTO> search(String queryString) throws Exception {
         return searchDetailed(queryString, DEFAULT_MAX_RESULTS).hits();
@@ -64,30 +98,27 @@ public class LuceneSearchServiceImpl implements LuceneSearchService {
         }
 
         String queryTrimmed = queryString.trim();
-        java.nio.file.Path path = Paths.get(indexPath);
 
-        boolean hasIndex = false;
-        if (Files.exists(path)) {
-            try (Directory dir = FSDirectory.open(path)) {
-                hasIndex = DirectoryReader.indexExists(dir);
-            } catch (Exception ignored) {}
-        }
+        DirectoryReader reader = null;
+        try {
+            reader = acquireReader();
+        } catch (Exception ignored) {}
 
         // If Lucene index does not exist in this container, trigger async/on-demand rebuild and use DB fallback
-        if (!hasIndex) {
+        if (reader == null) {
             log.warn("Lucene search index directory does not exist or has no segments at: {}. Triggering rebuild and serving from PostgreSQL database.", indexPath);
             try {
                 luceneIndexService.rebuildIndex();
+                reader = acquireReader();
             } catch (Exception e) {
                 log.error("Failed to rebuild Lucene index on-the-fly: {}", e.getMessage());
             }
-            return databaseFallbackSearch(queryTrimmed, limit);
+            if (reader == null) {
+                return databaseFallbackSearch(queryTrimmed, limit);
+            }
         }
 
-        try (Directory directory = FSDirectory.open(path);
-             IndexReader reader = DirectoryReader.open(directory);
-             StandardAnalyzer analyzer = new StandardAnalyzer()) {
-
+        try (StandardAnalyzer analyzer = new StandardAnalyzer()) {
             if (reader.numDocs() == 0) {
                 log.warn("Lucene index at {} has 0 docs. Using database search.", indexPath);
                 return databaseFallbackSearch(queryTrimmed, limit);

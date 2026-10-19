@@ -36,11 +36,13 @@ export class NotificationService {
 
   constructor(private http: HttpClient) {
     this.loadNotifications();
-    // Poll every 25 seconds for real-time broadcasts
+    // Poll every 30 seconds for real-time broadcasts only when tab is visible
     if (typeof window !== 'undefined') {
       this.pollInterval = setInterval(() => {
-        this.loadNotifications();
-      }, 25000);
+        if (typeof document !== 'undefined' && !document.hidden) {
+          this.loadNotifications();
+        }
+      }, 30000);
     }
   }
 

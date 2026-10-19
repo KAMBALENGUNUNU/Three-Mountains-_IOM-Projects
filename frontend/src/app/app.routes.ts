@@ -1,13 +1,31 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './components/home/home.component';
-import { SearchStartComponent } from './components/search-start/search-start.component';
-import { SearchResultsComponent } from './components/search-results/search-results.component';
-import { ReaderComponent } from './components/reader/reader.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'search', component: SearchStartComponent },
-  { path: 'q/:query', component: SearchResultsComponent },
-  { path: 'p/:subtopicId', component: ReaderComponent },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./components/home/home.component').then((m) => m.HomeComponent),
+  },
+  {
+    path: 'search',
+    loadComponent: () =>
+      import('./components/search-start/search-start.component').then(
+        (m) => m.SearchStartComponent,
+      ),
+  },
+  {
+    path: 'q/:query',
+    loadComponent: () =>
+      import('./components/search-results/search-results.component').then(
+        (m) => m.SearchResultsComponent,
+      ),
+  },
+  {
+    path: 'p/:subtopicId',
+    loadComponent: () =>
+      import('./components/reader/reader.component').then(
+        (m) => m.ReaderComponent,
+      ),
+  },
   { path: '**', redirectTo: '' },
 ];

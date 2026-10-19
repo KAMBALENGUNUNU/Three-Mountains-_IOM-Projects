@@ -19,6 +19,16 @@ public class SpaWebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+        // Hashed bundles, styles, fonts and static assets are cached for 1 year immutable
+        registry.addResourceHandler("/*.js", "/*.css", "/assets/**", "/favicon.ico")
+                .addResourceLocations("classpath:/static/")
+                .setCacheControl(org.springframework.http.CacheControl.maxAge(365, java.util.concurrent.TimeUnit.DAYS).cachePublic().immutable());
+
+        // index.html must not be aggressively cached so clients immediately receive updated bundle hashes
+        registry.addResourceHandler("/index.html")
+                .addResourceLocations("classpath:/static/index.html")
+                .setCacheControl(org.springframework.http.CacheControl.noCache());
+
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/")
                 .resourceChain(true)

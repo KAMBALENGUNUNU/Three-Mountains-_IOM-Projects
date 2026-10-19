@@ -309,9 +309,25 @@ public class ManualServiceImpl implements ManualService {
 
     private TopicDTO toTopicDTO(Topic topic) {
         List<SubTopicDTO> subTopicDTOs = topic.getSubTopics().stream()
-                .map(this::toSubTopicDTO)
+                .map(this::toTocSubTopicDTO)
                 .toList();
         return new TopicDTO(topic.getId(), topic.getTopicNumber(), topic.getTitle(), topic.getImageUrl(), subTopicDTOs);
+    }
+
+    private SubTopicDTO toTocSubTopicDTO(SubTopic subTopic) {
+        List<SectionDTO> sectionDTOs = subTopic.getSections().stream()
+                .sorted(Comparator.comparing((Section s) -> s.getOrderIndex() != null ? s.getOrderIndex() : 0)
+                        .thenComparing(Section::getId))
+                .map(this::toTocSectionDTO)
+                .toList();
+        return new SubTopicDTO(subTopic.getId(), subTopic.getSubNumber(), subTopic.getTitle(), sectionDTOs);
+    }
+
+    private SectionDTO toTocSectionDTO(Section section) {
+        String content = section.getContent();
+        int words = (content != null && !content.isBlank()) ? content.trim().split("\\s+").length : 500;
+        // In TOC responses, omit massive content text to achieve high-speed minimal network payload
+        return new SectionDTO(section.getId(), section.getTitle(), null, section.getOverview(), section.getImageUrl(), section.getOrderIndex(), words);
     }
 
     private SubTopicDTO toSubTopicDTO(SubTopic subTopic) {
@@ -324,6 +340,8 @@ public class ManualServiceImpl implements ManualService {
     }
 
     private SectionDTO toSectionDTO(Section section) {
-        return new SectionDTO(section.getId(), section.getTitle(), section.getContent(), section.getOverview(), section.getImageUrl(), section.getOrderIndex());
+        String content = section.getContent();
+        int words = (content != null && !content.isBlank()) ? content.trim().split("\\s+").length : 0;
+        return new SectionDTO(section.getId(), section.getTitle(), content, section.getOverview(), section.getImageUrl(), section.getOrderIndex(), words);
     }
 }

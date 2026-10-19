@@ -1,10 +1,8 @@
 package com.osbp.backend.security;
 
-import com.osbp.backend.modules.auth.repositories.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -15,16 +13,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 public class ApplicationSecurityConfig {
 
-    private final UserRepository userRepository;
+    private final CachedUserDetailsService cachedUserDetailsService;
 
-    public ApplicationSecurityConfig(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public ApplicationSecurityConfig(CachedUserDetailsService cachedUserDetailsService) {
+        this.cachedUserDetailsService = cachedUserDetailsService;
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + username));
+        return cachedUserDetailsService;
     }
 
     @Bean

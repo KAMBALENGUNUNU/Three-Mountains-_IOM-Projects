@@ -2510,7 +2510,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  coreModules(): Section[] {
+  readonly coreModules = computed<Section[]>(() => {
     const t = this.tree();
     if (!t) return [];
     return t.sections.filter((s) => {
@@ -2521,9 +2521,9 @@ export class HomeComponent implements OnInit {
       }
       return true;
     });
-  }
+  });
 
-  referenceSections(): Section[] {
+  readonly referenceSections = computed<Section[]>(() => {
     const t = this.tree();
     if (!t) return [];
     return t.sections.filter((s) => {
@@ -2531,7 +2531,7 @@ export class HomeComponent implements OnInit {
       const lower = s.title.toLowerCase();
       return lower.includes('reference') || lower.includes('bibliography') || lower.includes('preliminar');
     });
-  }
+  });
 
   isTopicOpen(no: string): boolean {
     return !!this.openTopics()[no];

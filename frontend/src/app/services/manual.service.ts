@@ -23,10 +23,11 @@ const API_BASE_URL =
 interface BackendSection {
   id: number;
   title: string;
-  content: string;
+  content?: string;
   overview?: string;
   imageUrl?: string;
   orderIndex?: number;
+  wordCount?: number;
 }
 
 interface BackendSubTopic {
@@ -137,13 +138,13 @@ export class ManualService {
         );
 
         const subtopics: SubTopic[] = validSections.map((sec, secIdx) => {
-          const textLen = sec.content ? sec.content.length : 1200;
+          const words = sec.wordCount ?? (sec.content ? sec.content.trim().split(/\s+/).filter(Boolean).length : 500);
+          const textLen = sec.content ? sec.content.length : words * 6;
           const pageSpan = Math.max(1, Math.round(textLen / 2000));
           const startP = pageRunningOffset;
           const endP = startP + pageSpan;
           pageRunningOffset = endP;
 
-          const words = sec.content ? sec.content.trim().split(/\s+/).filter(Boolean).length : 500;
           const cleanTitle = this.cleanSectionTitle(sec.title);
 
           return {
@@ -254,8 +255,8 @@ export class ManualService {
       }
     }
 
-    const contentBlocks = this.parseTextToContentBlocks(sec.content, sec.title);
-    const wordCount = sec.content ? sec.content.trim().split(/\s+/).filter(Boolean).length : 500;
+    const contentBlocks = this.parseTextToContentBlocks(sec.content || '', sec.title);
+    const wordCount = sec.wordCount ?? (sec.content ? sec.content.trim().split(/\s+/).filter(Boolean).length : 500);
 
     return {
       id: `art-${sec.id}`,
