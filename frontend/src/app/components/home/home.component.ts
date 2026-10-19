@@ -112,7 +112,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
           <div class="main-top-bar">
             <div>
               <h2 class="main-top-title">Field Guide Curriculum</h2>
-              <span class="main-top-sub">Operational modules, border standards & trade facilitation</span>
+              <span class="main-top-sub">Operational sections, border standards & trade facilitation</span>
             </div>
             @if (authService.isAdmin()) {
               <div class="main-admin-actions">
@@ -142,7 +142,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
               <li class="card {{ getTintClass(section.order) }}" [attr.data-topic]="section.order">
                 <!-- Header -->
                 <div class="c-head">
-                  <div class="c-img" role="img" aria-label="Module illustration">
+                  <div class="c-img" role="img" aria-label="Section illustration">
                     @if (section.imageUrl) {
                       <img
                         [src]="section.imageUrl"
@@ -163,18 +163,18 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             type="button"
                             class="btn-edit-module"
                             (click)="openModuleEditor(section)"
-                            title="Edit this module's title and illustration image"
+                            title="Edit this section's title and illustration image"
                           >
                             <app-icon name="edit" [size]="13" />
-                            Edit Module
+                            Edit Section
                           </button>
                           <button
                             type="button"
                             class="btn-delete-module"
                             (click)="confirmDeleteModule(section)"
-                            title="Delete this module and all its pages"
+                            title="Delete this section and all its pages"
                           >
-                            Delete
+                            Delete Section
                           </button>
                         </div>
                       }
@@ -304,7 +304,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
             @for (sec of referenceSections(); track sec.id) {
               <li class="card t0" [attr.data-topic]="'ref-' + sec.order">
                 <div class="c-head">
-                  <div class="c-img" role="img" aria-label="Module illustration">
+                  <div class="c-img" role="img" aria-label="Section illustration">
                     @if (sec.imageUrl) {
                       <img
                         [src]="sec.imageUrl"
@@ -325,18 +325,18 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                             type="button"
                             class="btn-edit-module"
                             (click)="openModuleEditor(sec)"
-                            title="Edit this module's title and illustration image"
+                            title="Edit this section's title and illustration image"
                           >
                             <app-icon name="edit" [size]="13" />
-                            Edit Module
+                            Edit Section
                           </button>
                           <button
                             type="button"
                             class="btn-delete-module"
                             (click)="confirmDeleteModule(sec)"
-                            title="Delete this module and all its pages"
+                            title="Delete this section and all its pages"
                           >
-                            Delete
+                            Delete Section
                           </button>
                         </div>
                       }
@@ -748,14 +748,14 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
         </div>
       }
 
-      <!-- Module Editor Modal -->
+      <!-- Section Editor Modal -->
       @if (moduleModalOpen() && selectedModule(); as mod) {
         <div class="modal-backdrop" (click)="closeModuleEditor()">
           <div class="modal-card edit-modal-card" style="max-width: 600px;" (click)="$event.stopPropagation()">
             <div class="modal-head">
               <div>
-                <span class="modal-sub">Module Settings</span>
-                <h3 class="modal-title">Edit Module</h3>
+                <span class="modal-sub">Section Settings</span>
+                <h3 class="modal-title">Edit Section</h3>
               </div>
               <button type="button" class="btn-close" (click)="closeModuleEditor()">&times;</button>
             </div>
@@ -768,21 +768,21 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                 <div class="form-error">{{ moduleErrorMsg() }}</div>
               }
 
-              <!-- Module Title -->
+              <!-- Section Title -->
               <div class="form-group">
-                <label for="edit-module-title">Module Title:</label>
+                <label for="edit-module-title">Section Title:</label>
                 <input
                   id="edit-module-title"
                   type="text"
                   [(ngModel)]="editModuleTitle"
                   class="form-input"
-                  placeholder="e.g. Module 1: MIGRATION MANAGEMENT"
+                  placeholder="e.g. Section 1: MIGRATION MANAGEMENT"
                 />
               </div>
 
-              <!-- Module Image Management -->
+              <!-- Section Image Management -->
               <div class="form-group">
-                <label>Module Illustration / Image:</label>
+                <label>Section Illustration / Image:</label>
                 <div class="image-uploader-card">
                   <div class="image-uploader-controls">
                     <label class="btn-upload-file">
@@ -808,7 +808,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                         type="button"
                         class="btn-remove-img"
                         (click)="removeModuleImage()"
-                        title="Remove module image"
+                        title="Remove section image"
                       >
                         Remove
                       </button>
@@ -817,17 +817,17 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
 
                   @if (editModuleImageUrl) {
                     <div class="img-preview-box">
-                      <img [src]="editModuleImageUrl" alt="Module Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
+                      <img [src]="editModuleImageUrl" alt="Section Image Preview" class="img-thumb" style="width: 140px; height: 95px; object-fit: cover; border-radius: 6px;" />
                       <div class="img-preview-meta">
                         <span class="badge-success">Image Attached</span>
                         <span class="img-preview-hint">
-                          This image will display on the module card replacing the placeholder.
+                          This image will display on the section card replacing the placeholder.
                         </span>
                       </div>
                     </div>
                   } @else {
                     <div class="img-empty-box">
-                      <span>No custom image selected (default topic illustration placeholder will be used)</span>
+                      <span>No custom image selected (default section illustration placeholder will be used)</span>
                     </div>
                   }
                 </div>
@@ -840,9 +840,9 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                   class="btn-delete"
                   [disabled]="deletingModule() || savingModule()"
                   (click)="confirmDeleteModule(mod)"
-                  title="Delete this module and all its pages"
+                  title="Delete this section and all its pages"
                 >
-                  {{ deletingModule() ? 'Deleting...' : 'Delete Module' }}
+                  {{ deletingModule() ? 'Deleting...' : 'Delete Section' }}
                 </button>
                 <div style="display: flex; gap: 0.8rem;">
                   <button
@@ -859,7 +859,7 @@ import { AdminModalComponent } from '../admin-modal/admin-modal.component';
                     [disabled]="savingModule() || !editModuleTitle.trim() || deletingModule()"
                     (click)="handleSaveModuleEdit()"
                   >
-                    {{ savingModule() ? 'Saving...' : 'Save Module Changes' }}
+                    {{ savingModule() ? 'Saving...' : 'Save Section Changes' }}
                   </button>
                 </div>
               </div>
@@ -1758,7 +1758,7 @@ export class HomeComponent implements OnInit {
     if (!mod || !this.editModuleTitle.trim()) return;
 
     if (!mod.rawId) {
-      this.moduleErrorMsg.set('Cannot find the topic ID for this module.');
+      this.moduleErrorMsg.set('Cannot find the topic ID for this section.');
       return;
     }
 
@@ -1773,7 +1773,7 @@ export class HomeComponent implements OnInit {
         topicNumber: mod.order,
       });
 
-      this.moduleSuccessMsg.set('Module updated successfully!');
+      this.moduleSuccessMsg.set('Section updated successfully!');
       await this.loadTree();
       setTimeout(() => {
         if (this.moduleModalOpen()) {
@@ -1782,7 +1782,7 @@ export class HomeComponent implements OnInit {
       }, 900);
     } catch (err: any) {
       this.moduleErrorMsg.set(
-        err?.message || 'Failed to save module. Ensure you are logged in as admin.',
+        err?.message || 'Failed to save section. Ensure you are logged in as admin.',
       );
     } finally {
       this.savingModule.set(false);
@@ -1791,7 +1791,7 @@ export class HomeComponent implements OnInit {
 
   async confirmDeleteModule(sec: Section) {
     if (!sec.rawId) {
-      alert('Cannot delete this module because its database ID is missing.');
+      alert('Cannot delete this section because its database ID is missing.');
       return;
     }
 
@@ -1800,9 +1800,9 @@ export class HomeComponent implements OnInit {
 
     const confirmed = window.confirm(
       `Are you sure you want to delete "${sec.title}"?\n\n` +
-      `⚠️ WARNING: This module contains ${subtopicsCount} ${pageWord}/items. ` +
-      `If you delete this module, all ${subtopicsCount} of its ${pageWord} and items will also be permanently deleted from the manual!\n\n` +
-      `Do you want to proceed with deleting this module?`
+      `⚠️ WARNING: This section contains ${subtopicsCount} ${pageWord}/items. ` +
+      `If you delete this section, all ${subtopicsCount} of its ${pageWord} and items will also be permanently deleted from the manual!\n\n` +
+      `Do you want to proceed with deleting this section?`
     );
 
     if (!confirmed) return;
@@ -1819,10 +1819,10 @@ export class HomeComponent implements OnInit {
         this.closeModuleEditor();
       }
       await this.loadTree();
-      alert(`Module "${title}" and all its pages have been successfully deleted.`);
+      alert(`Section "${title}" and all its pages have been successfully deleted.`);
     } catch (err: any) {
-      this.moduleErrorMsg.set(err?.message || 'Failed to delete module.');
-      alert(err?.message || 'Failed to delete module.');
+      this.moduleErrorMsg.set(err?.message || 'Failed to delete section.');
+      alert(err?.message || 'Failed to delete section.');
     } finally {
       this.deletingModule.set(false);
     }

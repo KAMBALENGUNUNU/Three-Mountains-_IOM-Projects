@@ -183,8 +183,12 @@ export class ManualService {
       });
 
       let sectionTitle = top.title;
-      if (topicNum >= 1 && topicNum <= 8 && !sectionTitle.toLowerCase().startsWith('module')) {
-        sectionTitle = `Module ${topicNum}: ${sectionTitle}`;
+      if (topicNum >= 1 && topicNum <= 8) {
+        if (/^module\s*\d*[:.-]?\s*/i.test(sectionTitle)) {
+          sectionTitle = sectionTitle.replace(/^module\s*\d*[:.-]?\s*/i, `Section ${topicNum}: `);
+        } else if (!sectionTitle.toLowerCase().startsWith('section')) {
+          sectionTitle = `Section ${topicNum}: ${sectionTitle}`;
+        }
       }
 
       return {
