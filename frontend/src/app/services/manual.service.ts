@@ -484,6 +484,9 @@ export class ManualService {
         while (i + 1 < lines.length) {
           const nextRaw = lines[i + 1];
           const nextTrimmed = nextRaw.trim();
+          if (!nextTrimmed) {
+            break;
+          }
           if (
             nextTrimmed.match(/^\[media:(left|right|full)\|/i) ||
             nextTrimmed.startsWith('#') ||
@@ -494,9 +497,7 @@ export class ManualService {
             break;
           }
           i++;
-          if (nextTrimmed) {
-            inlineTxt = inlineTxt ? `${inlineTxt}\n\n${nextTrimmed}` : nextTrimmed;
-          }
+          inlineTxt = inlineTxt ? `${inlineTxt}\n${nextTrimmed}` : nextTrimmed;
         }
 
         blocks.push({
@@ -520,6 +521,9 @@ export class ManualService {
         while (i + 1 < lines.length) {
           const nextRaw = lines[i + 1];
           const nextTrimmed = nextRaw.trim();
+          if (!nextTrimmed) {
+            break;
+          }
           if (
             nextTrimmed.match(/^\[media:(left|right|full)\|/i) ||
             nextTrimmed.startsWith('#') ||
@@ -530,9 +534,7 @@ export class ManualService {
             break;
           }
           i++;
-          if (nextTrimmed) {
-            restTxt = restTxt ? `${restTxt}\n\n${nextTrimmed}` : nextTrimmed;
-          }
+          restTxt = restTxt ? `${restTxt}\n${nextTrimmed}` : nextTrimmed;
         }
 
         blocks.push({

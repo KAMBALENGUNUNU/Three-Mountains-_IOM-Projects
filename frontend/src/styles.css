@@ -859,6 +859,8 @@ button {
   gap: 1.6rem;
   align-items: flex-start;
   margin-bottom: 2rem;
+  width: 100%;
+  clear: both;
 }
 
 .block.left {
@@ -904,7 +906,10 @@ button {
 }
 
 .reader-text-paragraph {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.6rem;
+  width: 100%;
+  clear: both;
+  display: block;
 }
 
 .reader-text-paragraph p {
