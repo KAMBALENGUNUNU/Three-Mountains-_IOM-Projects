@@ -549,7 +549,15 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                 <span class="modal-sub">Curriculum Editor</span>
                 <h3 class="modal-title">Edit Page Content</h3>
               </div>
-              <button type="button" class="btn-close" (click)="editModalOpen.set(false)">&times;</button>
+              <button
+                type="button"
+                class="btn-exit-editor"
+                (click)="editModalOpen.set(false)"
+                title="Exit Editor (Esc)"
+              >
+                <span>Exit Editor</span>
+                <span class="exit-cross">&times;</span>
+              </button>
             </div>
 
             <!-- Editor Navigation Tabs -->
@@ -1852,15 +1860,42 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
         padding: 1.5rem;
       }
       .edit-modal-card {
-        width: 100%;
-        max-width: 760px;
-        max-height: 90vh;
+        width: 98vw;
+        max-width: 1440px;
+        height: 96vh;
+        max-height: 96vh;
         background: #ffffff;
         border-radius: 12px;
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
         overflow-y: auto;
         display: flex;
         flex-direction: column;
+      }
+      .btn-exit-editor {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 0.45rem 0.95rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #1e293b;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .btn-exit-editor:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #0f172a;
+      }
+      .exit-cross {
+        font-size: 1.25rem;
+        line-height: 1;
+        font-weight: 800;
+        color: #64748b;
       }
       .modal-head {
         padding: 1.2rem 1.6rem;
