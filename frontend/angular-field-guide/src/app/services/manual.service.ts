@@ -9,6 +9,7 @@ import {
   SearchHit,
   AdminStats,
   ContentEditPayload,
+  SectionVersion,
   Section,
   Topic,
   SubTopic,
@@ -702,7 +703,24 @@ export class ManualService {
         content: payload.content,
         overview: payload.overview,
         imageUrl: payload.imageUrl,
+        isDraft: payload.isDraft ?? false,
+        changeSummary: payload.changeSummary ?? null,
       }),
+    );
+    this.cachedTree = null;
+    return { ok: true };
+  }
+
+  async getSectionVersions(sectionId: string | number): Promise<SectionVersion[]> {
+    const res = await firstValueFrom(
+      this.http.get<ApiResponseEnvelope<SectionVersion[]>>(`${API_BASE_URL}/admin/sections/${sectionId}/versions`),
+    );
+    return res.data || [];
+  }
+
+  async revertSectionVersion(sectionId: string | number, versionNumber: number): Promise<{ ok: boolean }> {
+    await firstValueFrom(
+      this.http.post(`${API_BASE_URL}/admin/sections/${sectionId}/revert/${versionNumber}`, {}),
     );
     this.cachedTree = null;
     return { ok: true };

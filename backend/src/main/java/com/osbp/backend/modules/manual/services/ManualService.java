@@ -112,4 +112,21 @@ public interface ManualService {
      * @return the created {@link com.osbp.backend.modules.manual.dtos.SectionDTO}
      */
     com.osbp.backend.modules.manual.dtos.SectionDTO createPageUnderTopic(Long topicId, com.osbp.backend.modules.manual.dtos.CreateSectionRequestDTO request);
+
+    /**
+     * Retrieves all historical versions / drafts for a section.
+     *
+     * @param sectionId the section ID
+     * @return list of versions ordered newest first
+     */
+    java.util.List<com.osbp.backend.modules.manual.dtos.SectionVersionDTO> getSectionVersions(Long sectionId);
+
+    /**
+     * Reverts a section to a specific version number.
+     *
+     * @param sectionId the section ID
+     * @param versionNumber the target version to restore
+     * @return the updated SectionDTO reflecting the restored version
+     */
+    com.osbp.backend.modules.manual.dtos.SectionDTO revertSectionVersion(Long sectionId, Integer versionNumber);
 }

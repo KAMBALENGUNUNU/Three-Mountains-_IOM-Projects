@@ -2,9 +2,11 @@ package com.osbp.backend.modules.manual.services.impl;
 
 import com.osbp.backend.modules.manual.dtos.*;
 import com.osbp.backend.modules.manual.models.Section;
+import com.osbp.backend.modules.manual.models.SectionVersion;
 import com.osbp.backend.modules.manual.models.SubTopic;
 import com.osbp.backend.modules.manual.models.Topic;
 import com.osbp.backend.modules.manual.repositories.SectionRepository;
+import com.osbp.backend.modules.manual.repositories.SectionVersionRepository;
 import com.osbp.backend.modules.manual.repositories.SubTopicRepository;
 import com.osbp.backend.modules.manual.repositories.TopicRepository;
 import com.osbp.backend.modules.manual.services.ManualService;
@@ -28,16 +30,19 @@ public class ManualServiceImpl implements ManualService {
     private final TopicRepository topicRepository;
     private final SubTopicRepository subTopicRepository;
     private final SectionRepository sectionRepository;
+    private final SectionVersionRepository sectionVersionRepository;
     private final LuceneIndexService luceneIndexService;
 
     public ManualServiceImpl(
             TopicRepository topicRepository,
             SubTopicRepository subTopicRepository,
             SectionRepository sectionRepository,
+            SectionVersionRepository sectionVersionRepository,
             LuceneIndexService luceneIndexService) {
         this.topicRepository = topicRepository;
         this.subTopicRepository = subTopicRepository;
         this.sectionRepository = sectionRepository;
+        this.sectionVersionRepository = sectionVersionRepository;
         this.luceneIndexService = luceneIndexService;
     }
 
@@ -78,6 +83,54 @@ public class ManualServiceImpl implements ManualService {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + id));
 
+        // Get current highest version number
+        Integer maxVersion = sectionVersionRepository.findMaxVersionNumberBySectionId(id);
+        if (maxVersion == null) maxVersion = 0;
+
+        // If no previous version was recorded yet, capture initial live state as version 1
+        if (maxVersion == 0) {
+            SectionVersion v1 = new SectionVersion(
+                    section,
+                    1,
+                    section.getTitle(),
+                    section.getContent(),
+                    section.getOverview(),
+                    section.getImageUrl(),
+                    "PUBLISHED",
+                    "Initial baseline version",
+                    "system"
+            );
+            sectionVersionRepository.save(v1);
+            maxVersion = 1;
+        }
+
+        boolean isDraft = Boolean.TRUE.equals(request.isDraft());
+        int nextVersion = maxVersion + 1;
+        String status = isDraft ? "DRAFT" : "PUBLISHED";
+        String summary = request.changeSummary() != null && !request.changeSummary().isBlank()
+                ? request.changeSummary().trim()
+                : (isDraft ? "Draft revision" : "Published update");
+
+        // Record the new version snapshot
+        SectionVersion newVersion = new SectionVersion(
+                section,
+                nextVersion,
+                request.title(),
+                request.content(),
+                request.overview(),
+                request.imageUrl(),
+                status,
+                summary,
+                "admin"
+        );
+        sectionVersionRepository.save(newVersion);
+
+        // If draft, do NOT overwrite public live content or rebuild search index
+        if (isDraft) {
+            return toSectionDTO(section);
+        }
+
+        // Apply published changes to the live section
         section.setTitle(request.title());
         section.setContent(request.content());
         if (request.overview() != null) {
@@ -126,6 +179,7 @@ public class ManualServiceImpl implements ManualService {
         Section section = sectionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + id));
 
+        sectionVersionRepository.deleteBySectionId(id);
         sectionRepository.delete(section);
 
         try {
@@ -298,6 +352,79 @@ public class ManualServiceImpl implements ManualService {
             luceneIndexService.updateSectionIndex(saved);
         } catch (Exception e) {
             throw new RuntimeException("Failed to index new section: " + saved.getId(), e);
+        }
+
+        return toSectionDTO(saved);
+    }
+
+    // ------------------------------------------------------------------ //
+    //  Version Control & Revert Operations
+    // ------------------------------------------------------------------ //
+
+    @Override
+    public List<SectionVersionDTO> getSectionVersions(Long sectionId) {
+        // Verify section exists
+        if (!sectionRepository.existsById(sectionId)) {
+            throw new EntityNotFoundException("Section not found with id: " + sectionId);
+        }
+
+        List<SectionVersion> versions = sectionVersionRepository.findBySectionIdOrderByVersionNumberDesc(sectionId);
+        return versions.stream()
+                .map(v -> new SectionVersionDTO(
+                        v.getId(),
+                        v.getSection().getId(),
+                        v.getVersionNumber(),
+                        v.getTitle(),
+                        v.getContent(),
+                        v.getOverview(),
+                        v.getImageUrl(),
+                        v.getStatus(),
+                        v.getChangeSummary(),
+                        v.getCreatedBy(),
+                        v.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = {"toc", "sections"}, allEntries = true)
+    public SectionDTO revertSectionVersion(Long sectionId, Integer versionNumber) {
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new EntityNotFoundException("Section not found with id: " + sectionId));
+
+        SectionVersion targetVersion = sectionVersionRepository
+                .findBySectionIdAndVersionNumber(sectionId, versionNumber)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Version " + versionNumber + " not found for section: " + sectionId));
+
+        // Restore section state from target version
+        section.setTitle(targetVersion.getTitle());
+        section.setContent(targetVersion.getContent());
+        section.setOverview(targetVersion.getOverview());
+        section.setImageUrl(targetVersion.getImageUrl());
+        Section saved = sectionRepository.save(section);
+
+        // Record a new version denoting the revert action
+        Integer maxVersion = sectionVersionRepository.findMaxVersionNumberBySectionId(sectionId);
+        int nextVersion = (maxVersion != null ? maxVersion : 0) + 1;
+        SectionVersion revertSnapshot = new SectionVersion(
+                section,
+                nextVersion,
+                targetVersion.getTitle(),
+                targetVersion.getContent(),
+                targetVersion.getOverview(),
+                targetVersion.getImageUrl(),
+                "PUBLISHED",
+                "Reverted to Version " + versionNumber,
+                "admin"
+        );
+        sectionVersionRepository.save(revertSnapshot);
+
+        try {
+            luceneIndexService.updateSectionIndex(saved);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update search index on revert: " + sectionId, e);
         }
 
         return toSectionDTO(saved);

@@ -148,6 +148,22 @@ export interface ContentEditPayload {
   overview?: string;
   imageUrl?: string;
   order?: number;
+  isDraft?: boolean;
+  changeSummary?: string;
+}
+
+export interface SectionVersion {
+  id: number;
+  sectionId: number;
+  versionNumber: number;
+  title: string;
+  content: string;
+  overview?: string;
+  imageUrl?: string;
+  status: 'DRAFT' | 'PUBLISHED';
+  changeSummary?: string;
+  createdBy: string;
+  createdAt: string;
 }
 
 // ---- Flattened tree node ----

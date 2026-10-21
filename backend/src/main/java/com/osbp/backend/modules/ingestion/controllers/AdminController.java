@@ -158,6 +158,32 @@ public class AdminController {
     }
 
     // ------------------------------------------------------------------ //
+    //  Section Versioning & Draft Management
+    // ------------------------------------------------------------------ //
+
+    @Operation(
+            summary = "Get historical versions and drafts for a section",
+            description = "ADMIN only. Returns a list of all historical versions and drafts for a specific section, ordered newest first."
+    )
+    @GetMapping("/sections/{id}/versions")
+    public ResponseEntity<ApiResponse<List<SectionVersionDTO>>> getSectionVersions(@PathVariable Long id) {
+        List<SectionVersionDTO> versions = manualService.getSectionVersions(id);
+        return ResponseEntity.ok(ApiResponse.ok(versions));
+    }
+
+    @Operation(
+            summary = "Revert section to a specific version",
+            description = "ADMIN only. Restores a section's content and title to a specified historical version."
+    )
+    @PostMapping("/sections/{id}/revert/{versionNumber}")
+    public ResponseEntity<ApiResponse<SectionDTO>> revertSectionVersion(
+            @PathVariable Long id,
+            @PathVariable Integer versionNumber) {
+        SectionDTO restored = manualService.revertSectionVersion(id, versionNumber);
+        return ResponseEntity.ok(ApiResponse.ok("Reverted section to version " + versionNumber + " successfully", restored));
+    }
+
+    // ------------------------------------------------------------------ //
     //  Topic & SubTopic Management
     // ------------------------------------------------------------------ //
 
