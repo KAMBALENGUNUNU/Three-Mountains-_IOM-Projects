@@ -770,6 +770,93 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                           </button>
                         </div>
 
+                        <!-- Image Size & Aspect Ratio Adjustments -->
+                        <div class="image-size-group">
+                          <div class="image-size-row">
+                            <span class="alignment-label" style="min-width: 85px;">Image Size:</span>
+                            <div class="btn-size-pills">
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'small'"
+                                (click)="setEditBlockSize(bIdx, 'small')"
+                                title="Small (200px / 32% width)"
+                              >
+                                Small (32%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="!blk.imageSize || blk.imageSize === 'medium'"
+                                (click)="setEditBlockSize(bIdx, 'medium')"
+                                title="Medium (280px / 45% width - Standard)"
+                              >
+                                Medium (45%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'large'"
+                                (click)="setEditBlockSize(bIdx, 'large')"
+                                title="Large (380px / 58% width)"
+                              >
+                                Large (58%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'full'"
+                                (click)="setEditBlockSize(bIdx, 'full')"
+                                title="Full Width (100% width)"
+                              >
+                                Full Width (100%)
+                              </button>
+                            </div>
+                          </div>
+
+                          <div class="image-size-row" style="margin-top: 0.45rem;">
+                            <span class="alignment-label" style="min-width: 85px;">Proportions:</span>
+                            <div class="btn-size-pills">
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="!blk.aspectRatio || blk.aspectRatio === '4-3'"
+                                (click)="setEditBlockRatio(bIdx, '4-3')"
+                                title="Standard 4:3 proportion"
+                              >
+                                4:3 Standard
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === '16-9'"
+                                (click)="setEditBlockRatio(bIdx, '16-9')"
+                                title="Widescreen 16:9 proportion"
+                              >
+                                16:9 Wide
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === '1-1'"
+                                (click)="setEditBlockRatio(bIdx, '1-1')"
+                                title="Square 1:1 proportion"
+                              >
+                                1:1 Square
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === 'auto'"
+                                (click)="setEditBlockRatio(bIdx, 'auto')"
+                                title="Natural proportion (preserves full image without cropping)"
+                              >
+                                Natural (Auto)
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Image Uploader & Text Layout -->
                         <div class="media-block-editor-grid">
                           <div class="media-block-uploader">
@@ -805,10 +892,27 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                                 }
                               </div>
                               @if (blk.imageUrl) {
-                                <div class="img-preview-box" style="margin-top: 0.5rem;">
-                                  <img [src]="blk.imageUrl" alt="Block image preview" class="img-thumb" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;" />
-                                  <div class="img-preview-meta">
+                                <div class="img-preview-box" style="margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.8rem;">
+                                  <div
+                                    [style.width]="getBlockThumbWidth(blk.imageSize)"
+                                    [style.aspectRatio]="getBlockAspectRatio(blk.aspectRatio)"
+                                    [style.maxHeight]="blk.aspectRatio === 'auto' ? '140px' : 'none'"
+                                    style="border: 2px solid var(--blue); border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                  >
+                                    <img
+                                      [src]="blk.imageUrl"
+                                      alt="Block image preview"
+                                      [style.objectFit]="blk.aspectRatio === 'auto' ? 'contain' : 'cover'"
+                                      style="width: 100%; height: 100%; display: block;"
+                                    />
+                                  </div>
+                                  <div class="img-preview-meta" style="flex: 1;">
                                     <span class="badge-success">Attached</span>
+                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.35rem; line-height: 1.4;">
+                                      Size: <strong>{{ getBlockSizeLabel(blk.imageSize) }}</strong>
+                                      <br />
+                                      Ratio: <strong>{{ getBlockRatioLabel(blk.aspectRatio) }}</strong>
+                                    </div>
                                   </div>
                                 </div>
                               }
@@ -1550,6 +1654,93 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                           </button>
                         </div>
 
+                        <!-- Image Size & Aspect Ratio Adjustments -->
+                        <div class="image-size-group">
+                          <div class="image-size-row">
+                            <span class="alignment-label" style="min-width: 85px;">Image Size:</span>
+                            <div class="btn-size-pills">
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'small'"
+                                (click)="setNewPageBlockSize(bIdx, 'small')"
+                                title="Small (200px / 32% width)"
+                              >
+                                Small (32%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="!blk.imageSize || blk.imageSize === 'medium'"
+                                (click)="setNewPageBlockSize(bIdx, 'medium')"
+                                title="Medium (280px / 45% width - Standard)"
+                              >
+                                Medium (45%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'large'"
+                                (click)="setNewPageBlockSize(bIdx, 'large')"
+                                title="Large (380px / 58% width)"
+                              >
+                                Large (58%)
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.imageSize === 'full'"
+                                (click)="setNewPageBlockSize(bIdx, 'full')"
+                                title="Full Width (100% width)"
+                              >
+                                Full Width (100%)
+                              </button>
+                            </div>
+                          </div>
+
+                          <div class="image-size-row" style="margin-top: 0.45rem;">
+                            <span class="alignment-label" style="min-width: 85px;">Proportions:</span>
+                            <div class="btn-size-pills">
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="!blk.aspectRatio || blk.aspectRatio === '4-3'"
+                                (click)="setNewPageBlockRatio(bIdx, '4-3')"
+                                title="Standard 4:3 proportion"
+                              >
+                                4:3 Standard
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === '16-9'"
+                                (click)="setNewPageBlockRatio(bIdx, '16-9')"
+                                title="Widescreen 16:9 proportion"
+                              >
+                                16:9 Wide
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === '1-1'"
+                                (click)="setNewPageBlockRatio(bIdx, '1-1')"
+                                title="Square 1:1 proportion"
+                              >
+                                1:1 Square
+                              </button>
+                              <button
+                                type="button"
+                                class="btn-size"
+                                [class.active]="blk.aspectRatio === 'auto'"
+                                (click)="setNewPageBlockRatio(bIdx, 'auto')"
+                                title="Natural proportion (preserves full image without cropping)"
+                              >
+                                Natural (Auto)
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Image Uploader & Text Layout -->
                         <div class="media-block-editor-grid">
                           <div class="media-block-uploader">
@@ -1585,10 +1776,27 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                                 }
                               </div>
                               @if (blk.imageUrl) {
-                                <div class="img-preview-box" style="margin-top: 0.5rem;">
-                                  <img [src]="blk.imageUrl" alt="Block image preview" class="img-thumb" style="width: 120px; height: 80px; object-fit: cover; border-radius: 4px;" />
-                                  <div class="img-preview-meta">
+                                <div class="img-preview-box" style="margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.8rem;">
+                                  <div
+                                    [style.width]="getBlockThumbWidth(blk.imageSize)"
+                                    [style.aspectRatio]="getBlockAspectRatio(blk.aspectRatio)"
+                                    [style.maxHeight]="blk.aspectRatio === 'auto' ? '140px' : 'none'"
+                                    style="border: 2px solid var(--blue); border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                  >
+                                    <img
+                                      [src]="blk.imageUrl"
+                                      alt="Block image preview"
+                                      [style.objectFit]="blk.aspectRatio === 'auto' ? 'contain' : 'cover'"
+                                      style="width: 100%; height: 100%; display: block;"
+                                    />
+                                  </div>
+                                  <div class="img-preview-meta" style="flex: 1;">
                                     <span class="badge-success">Attached</span>
+                                    <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.35rem; line-height: 1.4;">
+                                      Size: <strong>{{ getBlockSizeLabel(blk.imageSize) }}</strong>
+                                      <br />
+                                      Ratio: <strong>{{ getBlockRatioLabel(blk.aspectRatio) }}</strong>
+                                    </div>
                                   </div>
                                 </div>
                               }
@@ -3290,7 +3498,7 @@ export class HomeComponent implements OnInit {
     }
     // 1. Strip custom media tags [media:...] and markdown images ![alt](url)
     let clean = text
-      .replace(/\[media:(?:left|right|full)\|[^\]]+\]/gi, '')
+      .replace(/\[media:(?:left|right|full)(?:\|[^\]|]+)*\|[^\]]+\]/gi, '')
       .replace(/!\[[^\]]*\]\([^)]+\)/g, '');
 
     // 2. Strip HTML tags (e.g. <p>, <b>, <table>, <tr>, <td>, etc.)
@@ -3588,13 +3796,15 @@ export class HomeComponent implements OnInit {
       const trimmed = chunk.trim();
       if (!trimmed) continue;
 
-      const mediaMatch = trimmed.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
+      const mediaMatch = trimmed.match(/^\[media:(left|right|full)(?:\|(small|medium|large|full|\d+%|\d+px))?(?:\|(4-3|16-9|1-1|auto))?\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
       if (mediaMatch) {
         blocks.push({
           type: 'media-text',
           alignment: mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full',
-          imageUrl: mediaMatch[2].trim(),
-          text: (mediaMatch[3] || '').trim(),
+          imageSize: mediaMatch[2] ? mediaMatch[2].toLowerCase() : 'medium',
+          aspectRatio: mediaMatch[3] ? mediaMatch[3].toLowerCase() : '4-3',
+          imageUrl: mediaMatch[4].trim(),
+          text: (mediaMatch[5] || '').trim(),
         });
         continue;
       }
@@ -3626,10 +3836,12 @@ export class HomeComponent implements OnInit {
       .map((b) => {
         if (b.type === 'media-text') {
           const align = b.alignment || 'right';
+          const size = b.imageSize || 'medium';
+          const ratio = b.aspectRatio || '4-3';
           const img = (b.imageUrl || '').trim();
           const txt = (b.text || '').trim();
           if (img) {
-            return `[media:${align}|${img}]\n${txt}`.trim();
+            return `[media:${align}|${size}|${ratio}|${img}]\n${txt}`.trim();
           }
           return txt;
         }
@@ -3732,6 +3944,26 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  setEditBlockSize(index: number, size: 'small' | 'medium' | 'large' | 'full' | string) {
+    this.editBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], imageSize: size };
+      }
+      return copy;
+    });
+  }
+
+  setEditBlockRatio(index: number, ratio: '4-3' | '16-9' | '1-1' | 'auto') {
+    this.editBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], aspectRatio: ratio };
+      }
+      return copy;
+    });
+  }
+
   onBlockImageSelected(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -3787,6 +4019,66 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  setNewPageBlockSize(index: number, size: 'small' | 'medium' | 'large' | 'full' | string) {
+    this.newPageBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], imageSize: size };
+      }
+      return copy;
+    });
+  }
+
+  setNewPageBlockRatio(index: number, ratio: '4-3' | '16-9' | '1-1' | 'auto') {
+    this.newPageBlocks.update((list) => {
+      const copy = [...list];
+      if (copy[index]) {
+        copy[index] = { ...copy[index], aspectRatio: ratio };
+      }
+      return copy;
+    });
+  }
+
+  getBlockThumbWidth(size?: string): string {
+    switch (size) {
+      case 'small': return '110px';
+      case 'large': return '210px';
+      case 'full': return '100%';
+      case 'medium':
+      default: return '150px';
+    }
+  }
+
+  getBlockAspectRatio(ratio?: string): string {
+    switch (ratio) {
+      case '16-9': return '16 / 9';
+      case '1-1': return '1 / 1';
+      case 'auto': return 'auto';
+      case '4-3':
+      default: return '4 / 3';
+    }
+  }
+
+  getBlockSizeLabel(size?: string): string {
+    switch (size) {
+      case 'small': return 'Small (32%)';
+      case 'large': return 'Large (58%)';
+      case 'full': return 'Full Width (100%)';
+      case 'medium':
+      default: return 'Medium (45%)';
+    }
+  }
+
+  getBlockRatioLabel(ratio?: string): string {
+    switch (ratio) {
+      case '16-9': return '16:9 Wide';
+      case '1-1': return '1:1 Square';
+      case 'auto': return 'Auto (Natural)';
+      case '4-3':
+      default: return '4:3 Standard';
+    }
+  }
+
   onNewPageBlockImageSelected(event: Event, index: number) {
     const input = event.target as HTMLInputElement;
     if (!input.files || input.files.length === 0) return;
@@ -3819,7 +4111,7 @@ export class HomeComponent implements OnInit {
       this.editImageUrl = art.imageUrl || '';
       const raw = art.content.map((b) => {
         if (b.type === 'media-text') {
-          return `[media:${b.alignment || 'right'}|${b.imageUrl || ''}]\n${b.text || ''}`.trim();
+          return `[media:${b.alignment || 'right'}|${b.imageSize || 'medium'}|${b.aspectRatio || '4-3'}|${b.imageUrl || ''}]\n${b.text || ''}`.trim();
         }
         return b.text || '';
       }).filter(Boolean).join('\n\n');

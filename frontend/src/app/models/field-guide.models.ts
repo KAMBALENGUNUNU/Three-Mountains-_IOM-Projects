@@ -81,6 +81,8 @@ export interface ContentBlock {
   caption?: string;
   imageUrl?: string;
   alignment?: 'left' | 'right' | 'full';
+  imageSize?: 'small' | 'medium' | 'large' | 'full' | string;
+  aspectRatio?: '4-3' | '16-9' | '1-1' | 'auto' | string;
   variant?: 'info' | 'warning' | 'danger' | 'success';
   _outlineIndex?: number;
 }

@@ -306,13 +306,15 @@ export class ManualService {
       for (const chunk of chunks) {
         const trimmed = chunk.trim();
         if (!trimmed) continue;
-        const mediaMatch = trimmed.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
+        const mediaMatch = trimmed.match(/^\[media:(left|right|full)(?:\|(small|medium|large|full|\d+%|\d+px))?(?:\|(4-3|16-9|1-1|auto))?\|([^\]]+)\](?:\s*([\s\S]*))?$/i);
         if (mediaMatch) {
           htmlBlocks.push({
             type: 'media-text',
             alignment: mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full',
-            imageUrl: mediaMatch[2].trim(),
-            text: (mediaMatch[3] || '').trim(),
+            imageSize: mediaMatch[2] ? mediaMatch[2].toLowerCase() : 'medium',
+            aspectRatio: mediaMatch[3] ? mediaMatch[3].toLowerCase() : '4-3',
+            imageUrl: mediaMatch[4].trim(),
+            text: (mediaMatch[5] || '').trim(),
           });
           continue;
         }
@@ -495,14 +497,16 @@ export class ManualService {
         });
         continue;
       }
-      // Check for custom media-text blocks: [media:alignment|url]
-      const mediaMatch = line.match(/^\[media:(left|right|full)\|([^\]]+)\](?:\s*(.*))?$/i);
+      // Check for custom media-text blocks: [media:alignment|url] or [media:alignment|size|ratio|url]
+      const mediaMatch = line.match(/^\[media:(left|right|full)(?:\|(small|medium|large|full|\d+%|\d+px))?(?:\|(4-3|16-9|1-1|auto))?\|([^\]]+)\](?:\s*(.*))?$/i);
       if (mediaMatch) {
         flushParagraph();
         flushList();
         const align = (mediaMatch[1].toLowerCase() as 'left' | 'right' | 'full');
-        const imgUrl = mediaMatch[2].trim();
-        let inlineTxt = (mediaMatch[3] || '').trim();
+        const imgSize = mediaMatch[2] ? mediaMatch[2].toLowerCase() : 'medium';
+        const imgRatio = mediaMatch[3] ? mediaMatch[3].toLowerCase() : '4-3';
+        const imgUrl = mediaMatch[4].trim();
+        let inlineTxt = (mediaMatch[5] || '').trim();
 
         while (i + 1 < lines.length) {
           const nextRaw = lines[i + 1];
@@ -511,7 +515,7 @@ export class ManualService {
             break;
           }
           if (
-            nextTrimmed.match(/^\[media:(left|right|full)\|/i) ||
+            nextTrimmed.match(/^\[media:(left|right|full)/i) ||
             nextTrimmed.startsWith('#') ||
             nextTrimmed.startsWith('> ') ||
             nextTrimmed.startsWith('|') ||
@@ -527,6 +531,8 @@ export class ManualService {
           type: 'media-text',
           imageUrl: imgUrl,
           alignment: align,
+          imageSize: imgSize,
+          aspectRatio: imgRatio,
           text: inlineTxt,
         });
         continue;

@@ -153,15 +153,23 @@ import { IconComponent } from '../icon/icon.component';
                     class="block {{ block.alignment === 'left' ? 'left' : block.alignment === 'full' ? 'full-media' : 'right' }} {{ tintClass() }}"
                   >
                     @if (block.imageUrl) {
-                      <div class="ph" role="img" [attr.aria-label]="block.caption || 'Section illustration'">
+                      <div
+                        class="ph size-{{ block.imageSize || 'medium' }} ratio-{{ block.aspectRatio || '4-3' }}"
+                        role="img"
+                        [attr.aria-label]="block.caption || 'Section illustration'"
+                      >
                         <img
                           [src]="block.imageUrl"
                           alt="{{ block.caption || art.title }}"
-                          style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;"
+                          style="width: 100%; height: 100%; border-radius: 10px;"
                         />
                       </div>
                     } @else {
-                      <div class="ph" role="img" aria-label="Section illustration placeholder">
+                      <div
+                        class="ph size-{{ block.imageSize || 'medium' }} ratio-{{ block.aspectRatio || '4-3' }}"
+                        role="img"
+                        aria-label="Section illustration placeholder"
+                      >
                         <app-icon [name]="iconName()" [size]="56" />
                         <span>Image placeholder</span>
                       </div>

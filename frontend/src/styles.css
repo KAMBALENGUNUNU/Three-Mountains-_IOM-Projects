@@ -890,6 +890,99 @@ button {
   flex: 0 0 280px;
   max-width: 45%;
   aspect-ratio: 4 / 3;
+  transition: all 0.2s ease;
+}
+
+/* Image size variants */
+.block .ph.size-small {
+  flex: 0 0 200px;
+  max-width: 32%;
+}
+
+.block .ph.size-medium {
+  flex: 0 0 280px;
+  max-width: 45%;
+}
+
+.block .ph.size-large {
+  flex: 0 0 380px;
+  max-width: 58%;
+}
+
+.block .ph.size-full {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Aspect ratio variants */
+.block .ph.ratio-16-9 {
+  aspect-ratio: 16 / 9;
+}
+
+.block .ph.ratio-4-3 {
+  aspect-ratio: 4 / 3;
+}
+
+.block .ph.ratio-1-1 {
+  aspect-ratio: 1 / 1;
+}
+
+.block .ph.ratio-auto {
+  aspect-ratio: auto;
+  height: auto;
+  max-height: 520px;
+}
+
+.block .ph.ratio-auto img {
+  object-fit: contain;
+}
+
+/* Image size editor controls */
+.image-size-group {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.image-size-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.btn-size-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.btn-size {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-size:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-soft);
+}
+
+.btn-size.active {
+  background: var(--blue);
+  color: #ffffff;
+  border-color: var(--blue);
 }
 
 .block .ph img {
