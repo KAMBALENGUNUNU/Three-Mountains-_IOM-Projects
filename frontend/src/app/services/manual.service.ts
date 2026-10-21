@@ -776,7 +776,14 @@ export class ManualService {
 
   async createNewPage(
     topicId: number,
-    payload: { title: string; content: string; overview?: string; imageUrl?: string | null },
+    payload: {
+      title: string;
+      content: string;
+      overview?: string;
+      imageUrl?: string | null;
+      isDraft?: boolean;
+      changeSummary?: string;
+    },
   ): Promise<{ ok: boolean; data?: any }> {
     const res = await firstValueFrom(
       this.http.post<any>(`${API_BASE_URL}/admin/topics/${topicId}/sections`, {
@@ -784,6 +791,8 @@ export class ManualService {
         content: payload.content,
         overview: payload.overview,
         imageUrl: payload.imageUrl ?? '',
+        isDraft: payload.isDraft ?? false,
+        changeSummary: payload.changeSummary ?? null,
       }),
     );
     this.cachedTree = null;

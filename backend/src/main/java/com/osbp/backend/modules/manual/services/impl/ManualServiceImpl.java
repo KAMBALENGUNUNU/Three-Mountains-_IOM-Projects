@@ -163,6 +163,24 @@ public class ManualServiceImpl implements ManualService {
         subTopic.addSection(section);
         Section saved = sectionRepository.save(section);
 
+        boolean isDraft = Boolean.TRUE.equals(request.isDraft());
+        String status = isDraft ? "DRAFT" : "PUBLISHED";
+        String summary = request.changeSummary() != null && !request.changeSummary().isBlank()
+                ? request.changeSummary().trim()
+                : (isDraft ? "Initial draft page creation" : "Initial published page creation");
+        SectionVersion v1 = new SectionVersion(
+                saved,
+                1,
+                saved.getTitle(),
+                saved.getContent(),
+                saved.getOverview(),
+                saved.getImageUrl(),
+                status,
+                summary,
+                "admin"
+        );
+        sectionVersionRepository.save(v1);
+
         try {
             luceneIndexService.updateSectionIndex(saved);
         } catch (Exception e) {
@@ -347,6 +365,24 @@ public class ManualServiceImpl implements ManualService {
         section.setOrderIndex(nextOrder);
         subTopic.addSection(section);
         Section saved = sectionRepository.save(section);
+
+        boolean isDraft = Boolean.TRUE.equals(request.isDraft());
+        String status = isDraft ? "DRAFT" : "PUBLISHED";
+        String summary = request.changeSummary() != null && !request.changeSummary().isBlank()
+                ? request.changeSummary().trim()
+                : (isDraft ? "Initial draft page creation" : "Initial published page creation");
+        SectionVersion v1 = new SectionVersion(
+                saved,
+                1,
+                saved.getTitle(),
+                saved.getContent(),
+                saved.getOverview(),
+                saved.getImageUrl(),
+                status,
+                summary,
+                "admin"
+        );
+        sectionVersionRepository.save(v1);
 
         try {
             luceneIndexService.updateSectionIndex(saved);

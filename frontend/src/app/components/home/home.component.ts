@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -1322,17 +1322,30 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       }
 
       <!-- ============================================================ -->
-      <!-- Add Page Modal Dialog -->
+      <!-- Add Page Modal Dialog (Full-Screen Creator with Draft & Version Control) -->
       <!-- ============================================================ -->
       @if (addPageModalOpen()) {
-        <div class="modal-backdrop" (click)="closeAddPageModal()">
-          <div class="modal-card edit-modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-backdrop editor-backdrop-fullscreen" (click)="requestExitAddPage()">
+          <!-- Floating Sticky Exit Button Outside Content Area -->
+          <button
+            type="button"
+            class="floating-exit-editor-btn"
+            (click)="$event.stopPropagation(); requestExitAddPage()"
+            title="Exit Editor (Esc)"
+          >
+            <span>Exit Editor</span>
+            <span class="floating-exit-cross">&times;</span>
+          </button>
+
+          <div class="modal-card edit-modal-card fullscreen-editor-card" (click)="$event.stopPropagation()">
             <div class="modal-head">
-              <div>
-                <span class="modal-sub">Curriculum Creator</span>
-                <h3 class="modal-title">Add New Page</h3>
+              <div style="display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;">
+                <div>
+                  <span class="modal-sub">Curriculum Creator</span>
+                  <h3 class="modal-title">Add New Page</h3>
+                </div>
+                <span class="version-status-pill status-draft">NEW PAGE DRAFT</span>
               </div>
-              <button type="button" class="btn-close" (click)="closeAddPageModal()">&times;</button>
             </div>
 
             <!-- Creator Navigation Tabs -->
@@ -1352,6 +1365,14 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                 (click)="addPageTab.set('preview')"
               >
                 Live Page Preview
+              </button>
+              <button
+                type="button"
+                class="modal-tab-btn"
+                [class.active]="addPageTab() === 'versions'"
+                (click)="addPageTab.set('versions')"
+              >
+                Version History & Drafts
               </button>
             </div>
 
@@ -1601,6 +1622,22 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   </div>
                 </div>
 
+                <!-- Version / Change Summary Input -->
+                <div class="form-group" style="margin-top: 1.2rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.8rem 1rem;">
+                  <label for="new-page-summary-inline" style="font-size: 0.88rem; font-weight: 700; color: #1e293b; margin-bottom: 0.35rem;">
+                    Initial Version Change Summary:
+                    <span style="font-weight: 400; font-size: 0.78rem; color: #64748b;">(Recorded into revision history & audit logs)</span>
+                  </label>
+                  <input
+                    id="new-page-summary-inline"
+                    type="text"
+                    [(ngModel)]="newPageChangeSummary"
+                    class="form-input"
+                    placeholder="e.g. Created initial operating procedure for border clearance"
+                    style="font-size: 0.9rem;"
+                  />
+                </div>
+
                 @if (addPageSuccessMsg()) {
                   <div class="form-success">{{ addPageSuccessMsg() }}</div>
                 }
@@ -1608,14 +1645,24 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   <div class="form-error">{{ addPageErrorMsg() }}</div>
                 }
 
-                <div class="modal-actions" style="justify-content: flex-end; gap: 0.8rem;">
+                <div class="modal-actions" style="justify-content: flex-end; gap: 0.8rem; flex-wrap: wrap;">
                   <button
                     type="button"
                     class="btn-cancel"
                     [disabled]="creatingPage()"
-                    (click)="closeAddPageModal()"
+                    (click)="requestExitAddPage()"
                   >
                     Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    style="font-size: 0.88rem; font-weight: 600; padding: 0.5rem 1rem;"
+                    [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
+                    (click)="handleCreatePage(true)"
+                    title="Save as Draft revision without publishing live to readers"
+                  >
+                    {{ creatingPage() && isDraftCreation ? 'Saving Draft...' : 'Save as Draft' }}
                   </button>
                   <button
                     type="button"
@@ -1628,14 +1675,14 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   </button>
                   <button
                     type="button"
-                    class="btn-save"
+                    class="btn-save btn-publish-live"
                     [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
-                    (click)="handleCreatePage()"
+                    (click)="handleCreatePage(false)"
                   >
-                    {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
+                    {{ creatingPage() && !isDraftCreation ? 'Publishing...' : 'Save & Publish Live' }}
                   </button>
                 </div>
-              } @else if (editTab() === 'preview') {
+              } @else if (addPageTab() === 'preview') {
                 <!-- Live Page Preview Mode -->
                 <div class="live-preview-container">
                   <div class="preview-notice-bar">
@@ -1698,21 +1745,167 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                     <div class="form-error" style="margin-top: 1rem;">{{ addPageErrorMsg() }}</div>
                   }
 
-                  <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.2rem; gap: 0.8rem;">
+                  <div class="modal-actions" style="justify-content: flex-end; margin-top: 1.2rem; gap: 0.8rem; flex-wrap: wrap;">
                     <button type="button" class="btn-cancel" (click)="addPageTab.set('edit')">
                       Back to Edit Form
                     </button>
                     <button
                       type="button"
+                      class="btn btn-secondary"
+                      style="font-size: 0.88rem; font-weight: 600; padding: 0.5rem 1rem;"
+                      [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
+                      (click)="handleCreatePage(true)"
+                      title="Save as Draft revision without publishing live to readers"
+                    >
+                      Save as Draft
+                    </button>
+                    <button
+                      type="button"
                       class="btn-save btn-publish-live"
                       [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
-                      (click)="handleCreatePage()"
+                      (click)="handleCreatePage(false)"
                     >
                       {{ creatingPage() ? 'Publishing...' : 'Create & Publish Live' }}
                     </button>
                   </div>
                 </div>
+              } @else if (addPageTab() === 'versions') {
+                <!-- Version Control & Draft Management for New Page -->
+                <div class="version-control-pane">
+                  <div class="version-control-header">
+                    <div>
+                      <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #00143c;">Version Control & Draft Governance</h4>
+                      <p style="margin: 0.3rem 0 0; font-size: 0.84rem; color: #64748b;">
+                        When this page is created, Version 1 will be permanently preserved in the audit log.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="version-summary-card" style="margin-top: 1.2rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem;">
+                    <h5 style="margin: 0 0 0.6rem; font-size: 0.95rem; font-weight: 700; color: #1e293b;">Publication Modes:</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.8rem;">
+                      <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                          <span class="version-status-pill status-draft">DRAFT</span>
+                          <strong style="color: #00143c; font-size: 0.92rem;">Save as Draft</strong>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.4;">
+                          Creates the page in the database as an internal Draft. It can be refined, edited, and published whenever ready.
+                        </p>
+                      </div>
+                      <div style="background: #ffffff; border: 1.5px solid #22c55e; border-radius: 8px; padding: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+                          <span class="version-status-pill status-published">PUBLISHED</span>
+                          <strong style="color: #00143c; font-size: 0.92rem;">Save & Publish Live</strong>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #64748b; margin: 0; line-height: 1.4;">
+                          Creates the page, registers Version 1, updates the Lucene full-text search index, and publishes it immediately.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="new-page-version-summary-tab">
+                      Initial Version Change Summary:
+                      <span style="font-weight: 400; font-size: 0.8rem; color: #64748b;">(Optional notes for curriculum version logs)</span>
+                    </label>
+                    <input
+                      id="new-page-version-summary-tab"
+                      type="text"
+                      [(ngModel)]="newPageChangeSummary"
+                      class="form-input"
+                      placeholder="e.g. Created initial operating procedure for border clearance"
+                    />
+                  </div>
+
+                  <div class="modal-actions" style="margin-top: 1.5rem; justify-content: flex-end; gap: 0.8rem;">
+                    <button type="button" class="btn-cancel" (click)="addPageTab.set('edit')">
+                      Back to Editor
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      style="font-size: 0.88rem; font-weight: 600; padding: 0.5rem 1rem;"
+                      [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
+                      (click)="handleCreatePage(true)"
+                      title="Save as Draft revision"
+                    >
+                      Save as Draft
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-save btn-publish-live"
+                      [disabled]="creatingPage() || !newPageTitle.trim() || !hasNewPageContent() || !newPageTopicId"
+                      (click)="handleCreatePage(false)"
+                    >
+                      Save & Publish Live
+                    </button>
+                  </div>
+                </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Unsaved Changes Warning Modal for Add Page -->
+      @if (unsavedAddPageWarningModalOpen()) {
+        <div class="modal-backdrop" (click)="unsavedAddPageWarningModalOpen.set(false)" style="z-index: 2200;">
+          <div class="modal-card delete-warning-modal-card" style="border-top-color: #f59e0b;" (click)="$event.stopPropagation()">
+            <div class="delete-warning-header">
+              <div class="delete-warning-icon-wrapper" style="background: #fef3c7; color: #d97706;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <span class="delete-warning-kicker" style="color: #d97706;">Unsaved New Page Content</span>
+                <h3 class="delete-warning-title">Save your new page before exiting?</h3>
+              </div>
+              <button type="button" class="btn-close" (click)="unsavedAddPageWarningModalOpen.set(false)">&times;</button>
+            </div>
+
+            <div class="delete-warning-body">
+              <div class="delete-warning-banner" style="background: #fffbeb; border-color: #fde68a; color: #78350f;">
+                <strong style="color: #92400e; display: block; margin-bottom: 0.4rem;">You have unsaved content on "{{ newPageTitle || 'New Page' }}"</strong>
+                <span>
+                  If you exit now without saving, your newly created text, formatting, and content blocks will be permanently discarded.
+                </span>
+              </div>
+            </div>
+
+            <div class="delete-warning-actions">
+              <button
+                type="button"
+                class="btn-cancel"
+                (click)="forceCloseAddPage()"
+                title="Discard all changes and exit the editor"
+              >
+                Discard & Exit
+              </button>
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="saveAddPageAndExitDraft()"
+                  [disabled]="creatingPage() || !newPageTitle.trim()"
+                  title="Save page as draft and exit"
+                >
+                  Save as Draft & Exit
+                </button>
+                <button
+                  type="button"
+                  class="btn-save"
+                  (click)="saveAddPageAndExitLive()"
+                  [disabled]="creatingPage() || !newPageTitle.trim()"
+                  title="Save and publish page live immediately"
+                >
+                  Save & Publish Live
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1941,33 +2134,34 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       }
       .floating-exit-editor-btn {
         position: fixed;
-        top: 1rem;
-        right: 1.5rem;
+        top: 1.15rem;
+        right: 1.6rem;
         z-index: 2150;
         display: inline-flex;
         align-items: center;
-        gap: 0.6rem;
-        background: #00143c;
-        border: 2px solid #FFB81C;
-        border-radius: 30px;
-        padding: 0.55rem 1.25rem;
-        font-size: 0.92rem;
-        font-weight: 800;
+        gap: 0.45rem;
+        background: #dc2626;
+        border: 1px solid #b91c1c;
+        border-radius: 8px;
+        padding: 0.5rem 1.1rem;
+        font-size: 0.88rem;
+        font-weight: 600;
         color: #ffffff;
         cursor: pointer;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-        transition: all 0.18s ease;
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+        transition: all 0.16s ease;
       }
       .floating-exit-editor-btn:hover {
-        background: #FFB81C;
-        color: #00143c;
-        transform: translateY(-2px);
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+        background: #b91c1c;
+        border-color: #991b1b;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(185, 28, 28, 0.48);
       }
       .floating-exit-cross {
-        font-size: 1.35rem;
+        font-size: 1.15rem;
         line-height: 1;
-        font-weight: 900;
+        font-weight: 700;
       }
       .fullscreen-editor-card {
         width: 98vw;
@@ -2919,12 +3113,15 @@ export class HomeComponent implements OnInit {
 
   // Add Page Creator
   addPageModalOpen = signal(false);
-  addPageTab = signal<'edit' | 'preview'>('edit');
+  addPageTab = signal<'edit' | 'preview' | 'versions'>('edit');
   newPageTopicId: number | null = null;
   newPageTitle = '';
   newPageOverview = '';
   newPageContent = '';
   newPageImageUrl = '';
+  newPageChangeSummary = '';
+  isDraftCreation = false;
+  unsavedAddPageWarningModalOpen = signal(false);
   newPageBlocks = signal<ContentBlock[]>([]);
   creatingPage = signal(false);
   addPageErrorMsg = signal('');
@@ -3801,6 +3998,30 @@ export class HomeComponent implements OnInit {
     );
   }
 
+  @HostListener('window:keydown.escape', ['$event'])
+  handleEscapeKey(event: KeyboardEvent) {
+    if (this.unsavedWarningModalOpen()) {
+      this.unsavedWarningModalOpen.set(false);
+      return;
+    }
+    if (this.unsavedAddPageWarningModalOpen()) {
+      this.unsavedAddPageWarningModalOpen.set(false);
+      return;
+    }
+    if (this.deleteModalOpen()) {
+      this.closeDeleteModal();
+      return;
+    }
+    if (this.editModalOpen()) {
+      this.requestExitEditor();
+      return;
+    }
+    if (this.addPageModalOpen()) {
+      this.requestExitAddPage();
+      return;
+    }
+  }
+
   requestExitEditor() {
     if (this.hasUnsavedChanges()) {
       this.unsavedWarningModalOpen.set(true);
@@ -4008,15 +4229,55 @@ export class HomeComponent implements OnInit {
     );
   }
 
+  hasUnsavedAddPageChanges(): boolean {
+    if (this.newPageTitle.trim() !== '') return true;
+    if (this.newPageOverview.trim() !== '') return true;
+    if (this.newPageImageUrl.trim() !== '') return true;
+    if (this.newPageBlocks().length > 1) return true;
+    const firstText = this.newPageBlocks()[0]?.text;
+    if (this.newPageBlocks().length === 1 && firstText && firstText.trim() !== '') return true;
+    return false;
+  }
+
+  requestExitAddPage() {
+    if (this.hasUnsavedAddPageChanges()) {
+      this.unsavedAddPageWarningModalOpen.set(true);
+    } else {
+      this.forceCloseAddPage();
+    }
+  }
+
+  forceCloseAddPage() {
+    this.unsavedAddPageWarningModalOpen.set(false);
+    this.closeAddPageModal();
+  }
+
+  async saveAddPageAndExitDraft() {
+    await this.handleCreatePage(true);
+    if (!this.addPageErrorMsg()) {
+      this.forceCloseAddPage();
+    }
+  }
+
+  async saveAddPageAndExitLive() {
+    await this.handleCreatePage(false);
+    if (!this.addPageErrorMsg()) {
+      this.forceCloseAddPage();
+    }
+  }
+
   closeAddPageModal() {
     this.addPageModalOpen.set(false);
+    this.unsavedAddPageWarningModalOpen.set(false);
     this.newPageTitle = '';
     this.newPageOverview = '';
     this.newPageContent = '';
     this.newPageImageUrl = '';
+    this.newPageChangeSummary = '';
     this.newPageBlocks.set([{ type: 'paragraph', text: '' }]);
     this.addPageErrorMsg.set('');
     this.addPageSuccessMsg.set('');
+    this.addPageTab.set('edit');
   }
 
   onNewPageImageSelected(event: Event) {
@@ -4034,7 +4295,7 @@ export class HomeComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  async handleCreatePage() {
+  async handleCreatePage(isDraft: boolean = false) {
     const title = this.newPageTitle.trim();
     const content = this.serializeBlocksToRaw(this.newPageBlocks()).trim() || this.newPageContent.trim();
     const topicId = Number(this.newPageTopicId);
@@ -4052,6 +4313,7 @@ export class HomeComponent implements OnInit {
       return;
     }
 
+    this.isDraftCreation = isDraft;
     this.creatingPage.set(true);
     this.addPageErrorMsg.set('');
     this.addPageSuccessMsg.set('');
@@ -4062,9 +4324,15 @@ export class HomeComponent implements OnInit {
         content,
         overview: this.newPageOverview.trim() || undefined,
         imageUrl: this.newPageImageUrl || null,
+        isDraft,
+        changeSummary: this.newPageChangeSummary.trim() || (isDraft ? 'Initial draft page creation' : 'Initial published page creation'),
       });
 
-      this.addPageSuccessMsg.set(`Page "${title}" was created successfully and added to the search index!`);
+      this.addPageSuccessMsg.set(
+        isDraft
+          ? `Page "${title}" saved as draft revision!`
+          : `Page "${title}" was created successfully and published live!`
+      );
       await this.loadTree();
 
       // Automatically expand section accordion so the new page is immediately visible
