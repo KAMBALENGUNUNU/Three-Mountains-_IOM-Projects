@@ -535,6 +535,25 @@
         border-color: #00143c;
         color: #ffffff;
       }
+      .btn-crop-resize {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition: all 0.15s ease;
+      }
+      .btn-crop-resize:hover {
+        background: #e0f2fe;
+        border-color: #7dd3fc;
+        color: #0369a1;
+      }
       .media-block-editor-grid {
         display: flex;
         gap: 1.25rem;

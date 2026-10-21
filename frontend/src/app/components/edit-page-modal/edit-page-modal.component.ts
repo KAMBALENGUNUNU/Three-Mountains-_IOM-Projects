@@ -13,11 +13,12 @@ import { FormsModule } from '@angular/forms';
 import { ContentBlock, SectionVersion } from '../../models/field-guide.models';
 import { ManualService } from '../../services/manual.service';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
+import { ImageCropModalComponent } from '../image-crop-modal/image-crop-modal.component';
 
 @Component({
   selector: 'app-edit-page-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, RichTextEditorComponent],
+  imports: [CommonModule, FormsModule, DatePipe, RichTextEditorComponent, ImageCropModalComponent],
   styleUrl: '../modal-editor.css',
   template: `
     @if (isOpen) {
@@ -139,12 +140,22 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
                   @if (editImageUrl) {
                     <div class="img-preview-box">
-                      <img [src]="editImageUrl" alt="Page Image Preview" class="img-thumb" />
+                      <img [src]="editImageUrl" alt="Page Image Preview" class="img-thumb" style="max-height: 120px; object-fit: contain;" />
                       <div class="img-preview-meta">
                         <span class="badge-success">Image Attached</span>
                         <span class="img-preview-hint">
                           This image will appear on the page and in card previews.
                         </span>
+                        <div style="margin-top: 0.5rem;">
+                          <button
+                            type="button"
+                            class="btn-crop-resize"
+                            (click)="openCropModalForPageImage()"
+                            title="Crop and resize this page illustration manually"
+                          >
+                            ✂️ Crop & Resize Image
+                          </button>
+                        </div>
                       </div>
                     </div>
                   } @else {
@@ -249,93 +260,6 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                         </button>
                       </div>
 
-                      <!-- Image Size & Aspect Ratio Adjustments -->
-                      <div class="image-size-group">
-                        <div class="image-size-row">
-                          <span class="alignment-label" style="min-width: 85px;">Image Size:</span>
-                          <div class="btn-size-pills">
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.imageSize === 'small'"
-                              (click)="setEditBlockSize(bIdx, 'small')"
-                              title="Small (200px / 32% width)"
-                            >
-                              Small (32%)
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="!blk.imageSize || blk.imageSize === 'medium'"
-                              (click)="setEditBlockSize(bIdx, 'medium')"
-                              title="Medium (280px / 45% width - Standard)"
-                            >
-                              Medium (45%)
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.imageSize === 'large'"
-                              (click)="setEditBlockSize(bIdx, 'large')"
-                              title="Large (380px / 58% width)"
-                            >
-                              Large (58%)
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.imageSize === 'full'"
-                              (click)="setEditBlockSize(bIdx, 'full')"
-                              title="Full Width (100% width)"
-                            >
-                              Full Width (100%)
-                            </button>
-                          </div>
-                        </div>
-
-                        <div class="image-size-row" style="margin-top: 0.45rem;">
-                          <span class="alignment-label" style="min-width: 85px;">Proportions:</span>
-                          <div class="btn-size-pills">
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="!blk.aspectRatio || blk.aspectRatio === '4-3'"
-                              (click)="setEditBlockRatio(bIdx, '4-3')"
-                              title="Standard 4:3 proportion"
-                            >
-                              4:3 Standard
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.aspectRatio === '16-9'"
-                              (click)="setEditBlockRatio(bIdx, '16-9')"
-                              title="Widescreen 16:9 proportion"
-                            >
-                              16:9 Wide
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.aspectRatio === '1-1'"
-                              (click)="setEditBlockRatio(bIdx, '1-1')"
-                              title="Square 1:1 proportion"
-                            >
-                              1:1 Square
-                            </button>
-                            <button
-                              type="button"
-                              class="btn-size"
-                              [class.active]="blk.aspectRatio === 'auto'"
-                              (click)="setEditBlockRatio(bIdx, 'auto')"
-                              title="Natural proportion (preserves full image without cropping)"
-                            >
-                              Natural (Auto)
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
                       <!-- Image Uploader & Text Layout -->
                       <div class="media-block-editor-grid">
                         <div class="media-block-uploader">
@@ -373,24 +297,25 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                             @if (blk.imageUrl) {
                               <div class="img-preview-box" style="margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 0.8rem;">
                                 <div
-                                  [style.width]="getBlockThumbWidth(blk.imageSize)"
-                                  [style.aspectRatio]="getBlockAspectRatio(blk.aspectRatio)"
-                                  [style.maxHeight]="blk.aspectRatio === 'auto' ? '140px' : 'none'"
-                                  style="border: 2px solid var(--blue); border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
+                                  style="width: 140px; max-height: 120px; border: 2px solid var(--blue); border-radius: 6px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"
                                 >
                                   <img
                                     [src]="blk.imageUrl"
                                     alt="Block image preview"
-                                    [style.objectFit]="blk.aspectRatio === 'auto' ? 'contain' : 'cover'"
-                                    style="width: 100%; height: 100%; display: block;"
+                                    style="width: 100%; height: 100%; object-fit: contain; display: block;"
                                   />
                                 </div>
                                 <div class="img-preview-meta" style="flex: 1;">
                                   <span class="badge-success">Attached</span>
-                                  <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.35rem; line-height: 1.4;">
-                                    Size: <strong>{{ getBlockSizeLabel(blk.imageSize) }}</strong>
-                                    <br />
-                                    Ratio: <strong>{{ getBlockRatioLabel(blk.aspectRatio) }}</strong>
+                                  <div style="margin-top: 0.45rem;">
+                                    <button
+                                      type="button"
+                                      class="btn-crop-resize"
+                                      (click)="openCropModalForBlock(bIdx)"
+                                      title="Crop and resize this image manually"
+                                    >
+                                      ✂️ Crop & Resize Image
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -793,6 +718,15 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
           </div>
         </div>
       }
+
+      <!-- Manual Image Crop & Resize Studio Modal -->
+      <app-image-crop-modal
+        [open]="cropModalOpen()"
+        [imageSrc]="cropModalImageSrc()"
+        [title]="cropModalTitle()"
+        (close)="cropModalOpen.set(false)"
+        (applied)="onCropApplied($event)"
+      />
     }
   `
 })
@@ -848,6 +782,12 @@ export class EditPageModalComponent implements OnChanges {
   private blockToDeleteIndex: number | null = null;
   private blockToDeleteSnippet = '';
   private blockToDeleteTypeLabel = '';
+
+  // Manual Crop & Resize Modal State
+  cropModalOpen = signal(false);
+  cropModalImageSrc = signal('');
+  cropModalTitle = signal('Crop & Resize Image');
+  private cropTarget: { type: 'page' | 'block'; index?: number } | null = null;
 
   constructor(private manualService: ManualService) {}
 
@@ -1137,6 +1077,39 @@ export class EditPageModalComponent implements OnChanges {
 
   removeImage() {
     this.editImageUrl = '';
+  }
+
+  openCropModalForPageImage() {
+    if (!this.editImageUrl) return;
+    this.cropTarget = { type: 'page' };
+    this.cropModalImageSrc.set(this.editImageUrl);
+    this.cropModalTitle.set('Crop & Resize Page Illustration');
+    this.cropModalOpen.set(true);
+  }
+
+  openCropModalForBlock(index: number) {
+    const blk = this.editBlocks()[index];
+    if (!blk || !blk.imageUrl) return;
+    this.cropTarget = { type: 'block', index };
+    this.cropModalImageSrc.set(blk.imageUrl);
+    this.cropModalTitle.set(`Crop & Resize Image (Block #${index + 1})`);
+    this.cropModalOpen.set(true);
+  }
+
+  onCropApplied(croppedDataUrl: string) {
+    if (this.cropTarget?.type === 'page') {
+      this.editImageUrl = croppedDataUrl;
+    } else if (this.cropTarget?.type === 'block' && typeof this.cropTarget.index === 'number') {
+      const idx = this.cropTarget.index;
+      this.editBlocks.update((list) => {
+        const copy = [...list];
+        if (copy[idx]) {
+          copy[idx] = { ...copy[idx], imageUrl: croppedDataUrl };
+        }
+        return copy;
+      });
+    }
+    this.cropModalOpen.set(false);
   }
 
   onBlockImageSelected(event: Event, index: number) {

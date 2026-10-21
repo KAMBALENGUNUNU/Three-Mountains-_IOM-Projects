@@ -881,16 +881,42 @@ button {
 
 .block.full-media .ph {
   width: 100%;
+  max-width: 100%;
   flex: none;
-  max-height: 420px;
-  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.block.full-media .ph img {
+  max-height: 520px;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+  display: block;
 }
 
 .block .ph {
-  flex: 0 0 280px;
+  flex: 0 0 320px;
   max-width: 45%;
-  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
+}
+
+.block .ph img {
+  width: 100%;
+  height: auto;
+  max-height: 440px;
+  object-fit: contain;
+  border-radius: 10px;
+  display: block;
 }
 
 /* Image size variants */
