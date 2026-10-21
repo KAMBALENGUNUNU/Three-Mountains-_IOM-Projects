@@ -3904,8 +3904,7 @@ export class HomeComponent implements OnInit {
   // ------------------------------------------------------------------ //
 
   openAddSectionModal() {
-    const nextNum = this.coreModules().length + 1;
-    this.newSectionTitle = `Section ${nextNum}: `;
+    this.newSectionTitle = '';
     this.newSectionImageUrl = '';
     this.addSectionErrorMsg.set('');
     this.addSectionSuccessMsg.set('');

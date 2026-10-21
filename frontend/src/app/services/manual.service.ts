@@ -190,17 +190,7 @@ export class ManualService {
         };
       });
 
-      let sectionTitle = top.title;
-      const isReferences = sectionTitle.toLowerCase().includes('reference') || sectionTitle.toLowerCase().includes('bibliography');
-      if (topicNum >= 1 && !isReferences) {
-        if (/^module\s*\d*[:.-]?\s*/i.test(sectionTitle)) {
-          sectionTitle = sectionTitle.replace(/^module\s*\d*[:.-]?\s*/i, `Section ${topicNum}: `);
-        } else if (/^section\s*\d*[:.-]?\s*/i.test(sectionTitle)) {
-          sectionTitle = sectionTitle.replace(/^section\s*\d*[:.-]?\s*/i, `Section ${topicNum}: `);
-        } else {
-          sectionTitle = `Section ${topicNum}: ${sectionTitle}`;
-        }
-      }
+      const sectionTitle = top.title;
 
       return {
         id: `sec-${top.id}`,
