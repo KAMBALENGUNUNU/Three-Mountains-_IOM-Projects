@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ContentTree, Section, SubTopic, ContentBlock, SectionVersion } from '../../models/field-guide.models';
 import { ManualService } from '../../services/manual.service';
@@ -2953,10 +2953,30 @@ export class HomeComponent implements OnInit {
     public notificationService: NotificationService,
     private manualService: ManualService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
-    this.loadTree();
+    this.loadTree().then(() => {
+      this.checkRouteForEditRequest();
+    });
+  }
+
+  private checkRouteForEditRequest() {
+    const editPageId = this.route.snapshot.queryParamMap.get('editPageId');
+    if (editPageId) {
+      this.selectedSubtopicId.set(editPageId);
+      this.editModalOpen.set(true);
+      this.editTab.set('edit');
+      this.loadSectionDataForEdit(editPageId);
+      // Clean query params from URL without reload
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { editPageId: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   async loadTree(forceRefresh: boolean = false) {
