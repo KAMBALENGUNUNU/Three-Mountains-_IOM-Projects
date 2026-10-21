@@ -731,7 +731,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                             type="button"
                             class="btn-block-ctrl btn-block-delete"
                             [disabled]="editBlocks().length === 1 && blk.type === 'paragraph' && !blk.text"
-                            (click)="removeEditBlock(bIdx)"
+                            (click)="promptRemoveEditBlock(bIdx)"
                             title="Delete this block"
                           >✕</button>
                         </div>
@@ -1511,7 +1511,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                             type="button"
                             class="btn-block-action btn-block-delete"
                             [disabled]="newPageBlocks().length <= 1"
-                            (click)="removeNewPageBlock(bIdx)"
+                            (click)="promptRemoveNewPageBlock(bIdx)"
                             title="Delete this block"
                           >✕</button>
                         </div>
@@ -2054,6 +2054,58 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   {{ savingEdit() ? 'Publishing...' : 'Publish & Exit' }}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Delete Content Block Confirmation Modal -->
+      @if (deleteBlockModalOpen()) {
+        <div class="modal-backdrop" (click)="cancelDeleteBlock()" style="z-index: 2250;">
+          <div class="modal-card delete-warning-modal-card" style="border-top-color: #ef4444; max-width: 480px;" (click)="$event.stopPropagation()">
+            <div class="delete-warning-header">
+              <div class="delete-warning-icon-wrapper" style="background: #fee2e2; color: #dc2626;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <span class="delete-warning-sub" style="color: #dc2626;">Confirm Block Removal</span>
+                <h3 class="delete-warning-title">Delete this content block?</h3>
+              </div>
+              <button type="button" class="btn-close" (click)="cancelDeleteBlock()">&times;</button>
+            </div>
+
+            <div class="delete-warning-body">
+              <div class="delete-warning-banner" style="background: #fef2f2; border-color: #fecaca; color: #991b1b;">
+                <strong style="color: #991b1b; display: block; margin-bottom: 0.35rem;">
+                  {{ blockToDeleteTitle() }}
+                </strong>
+                <span style="font-size: 0.88rem; color: #7f1d1d; line-height: 1.45; display: block;">
+                  {{ blockToDeleteDesc() }}
+                </span>
+              </div>
+            </div>
+
+            <div class="delete-warning-actions">
+              <button
+                type="button"
+                class="btn-cancel"
+                (click)="cancelDeleteBlock()"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn-delete"
+                (click)="executeDeleteBlock()"
+                style="background: #dc2626; color: #ffffff; border: none; font-weight: 700; padding: 0.55rem 1.2rem; border-radius: 6px; cursor: pointer;"
+              >
+                Yes, Delete Block
+              </button>
             </div>
           </div>
         </div>
@@ -3078,6 +3130,10 @@ export class HomeComponent implements OnInit {
   deleteModalExecuting = signal(false);
   deleteModalError = signal('');
 
+  // Content Block Deletion Warning State
+  deleteBlockModalOpen = signal(false);
+  blockToDeleteTarget = signal<{ isAddPage: boolean; index: number; blockType: string; snippet?: string } | null>(null);
+
   // Unsaved Changes Confirmation Dialog State
   unsavedWarningModalOpen = signal(false);
   initialEditState = {
@@ -3594,8 +3650,67 @@ export class HomeComponent implements OnInit {
     ]);
   }
 
+  promptRemoveEditBlock(index: number) {
+    const blk = this.editBlocks()[index];
+    if (!blk) return;
+    const typeLabel = blk.type === 'media-text' ? 'Media + Text' : 'Paragraph';
+    const textSnippet = blk.text ? (blk.text.length > 70 ? blk.text.slice(0, 70) + '...' : blk.text) : '';
+    this.blockToDeleteTarget.set({
+      isAddPage: false,
+      index,
+      blockType: typeLabel,
+      snippet: textSnippet,
+    });
+    this.deleteBlockModalOpen.set(true);
+  }
+
+  promptRemoveNewPageBlock(index: number) {
+    const blk = this.newPageBlocks()[index];
+    if (!blk) return;
+    const typeLabel = blk.type === 'media-text' ? 'Image & Text' : 'Text Paragraph';
+    const textSnippet = blk.text ? (blk.text.length > 70 ? blk.text.slice(0, 70) + '...' : blk.text) : '';
+    this.blockToDeleteTarget.set({
+      isAddPage: true,
+      index,
+      blockType: typeLabel,
+      snippet: textSnippet,
+    });
+    this.deleteBlockModalOpen.set(true);
+  }
+
+  cancelDeleteBlock() {
+    this.deleteBlockModalOpen.set(false);
+    this.blockToDeleteTarget.set(null);
+  }
+
+  executeDeleteBlock() {
+    const target = this.blockToDeleteTarget();
+    if (!target) return;
+    if (target.isAddPage) {
+      this.newPageBlocks.update((list) => list.filter((_, i) => i !== target.index));
+    } else {
+      this.editBlocks.update((list) => list.filter((_, i) => i !== target.index));
+    }
+    this.cancelDeleteBlock();
+  }
+
+  blockToDeleteTitle(): string {
+    const target = this.blockToDeleteTarget();
+    if (!target) return 'Are you sure you want to delete this block?';
+    return `Are you sure you want to delete Block #${target.index + 1} (${target.blockType})?`;
+  }
+
+  blockToDeleteDesc(): string {
+    const target = this.blockToDeleteTarget();
+    if (!target) return 'All text and media in this block will be permanently removed.';
+    if (target.snippet) {
+      return `All text and media in this block will be permanently removed: "${target.snippet}"`;
+    }
+    return 'All text, configuration, and image settings for this block will be permanently removed.';
+  }
+
   removeEditBlock(index: number) {
-    this.editBlocks.update((list) => list.filter((_, i) => i !== index));
+    this.promptRemoveEditBlock(index);
   }
 
   moveEditBlock(index: number, direction: -1 | 1) {
@@ -3650,7 +3765,7 @@ export class HomeComponent implements OnInit {
   }
 
   removeNewPageBlock(index: number) {
-    this.newPageBlocks.update((list) => list.filter((_, i) => i !== index));
+    this.promptRemoveNewPageBlock(index);
   }
 
   moveNewPageBlock(index: number, direction: -1 | 1) {
@@ -4000,6 +4115,10 @@ export class HomeComponent implements OnInit {
 
   @HostListener('window:keydown.escape', ['$event'])
   handleEscapeKey(event: KeyboardEvent) {
+    if (this.deleteBlockModalOpen()) {
+      this.cancelDeleteBlock();
+      return;
+    }
     if (this.unsavedWarningModalOpen()) {
       this.unsavedWarningModalOpen.set(false);
       return;
