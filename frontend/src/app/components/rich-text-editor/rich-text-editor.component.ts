@@ -286,7 +286,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
           @if (showTableMenu) {
             <div class="rte-dropdown-menu" (mousedown)="$event.preventDefault()">
               <button type="button" class="rte-menu-item" (click)="openTableModal()">
-                <span>➕ Insert New Table...</span>
+                <span>Insert New Table...</span>
               </button>
               <div class="rte-menu-divider"></div>
               <button type="button" class="rte-menu-item" (click)="insertTableRow('above')">

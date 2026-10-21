@@ -790,23 +790,27 @@ button {
   justify-content: space-between;
 }
 
-.btn-edit-top {
+.btn-edit-top,
+.btn-edit-page-reader {
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
   font-weight: 700;
   font-size: 0.88rem;
-  background: var(--card);
-  color: var(--blue);
-  border: 1.5px solid var(--blue);
+  background: #FFF4DD;
+  color: #92400e;
+  border: 1.5px solid #FFB81C;
   border-radius: 8px;
-  padding: 0.45rem 0.95rem;
-  box-shadow: 0 1px 4px rgba(0, 53, 160, 0.1);
+  padding: 0.45rem 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.btn-edit-top:hover {
-  background: var(--blue);
-  color: #fff;
+.btn-edit-top:hover,
+.btn-edit-page-reader:hover {
+  background: #FFB81C;
+  color: #1a1a1a;
   transform: translateY(-1px);
 }
 

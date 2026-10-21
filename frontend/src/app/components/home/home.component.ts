@@ -1,8 +1,8 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ContentTree, Section, SubTopic, ContentBlock } from '../../models/field-guide.models';
+import { ContentTree, Section, SubTopic, ContentBlock, SectionVersion } from '../../models/field-guide.models';
 import { ManualService } from '../../services/manual.service';
 import { AuthService } from '../../services/auth.service';
 import { NotificationService } from '../../services/notification.service';
@@ -334,7 +334,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                                     <button
                                       type="button"
                                       class="btn btn-card-delete"
-                                      (click)="handleDeleteDirect(sub)"
+                                      (click)="confirmDeletePage(sub.id, sub.title)"
                                       title="Delete this page"
                                     >
                                       Delete Page
@@ -509,7 +509,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                                     <button
                                       type="button"
                                       class="btn btn-card-delete"
-                                      (click)="handleDeleteDirect(sub)"
+                                      (click)="confirmDeletePage(sub.id, sub.title)"
                                       title="Delete this page"
                                     >
                                       Delete Page
@@ -542,14 +542,24 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
       <!-- Main Page Content Editor Modal -->
       @if (editModalOpen()) {
-        <div class="modal-backdrop" (click)="editModalOpen.set(false)">
-          <div class="modal-card edit-modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-backdrop editor-backdrop-fullscreen" (click)="requestExitEditor()">
+          <!-- Floating Sticky Exit Button Outside Content Area -->
+          <button
+            type="button"
+            class="floating-exit-editor-btn"
+            (click)="$event.stopPropagation(); requestExitEditor()"
+            title="Exit Editor (Esc)"
+          >
+            <span>Exit Editor</span>
+            <span class="floating-exit-cross">&times;</span>
+          </button>
+
+          <div class="modal-card edit-modal-card fullscreen-editor-card" (click)="$event.stopPropagation()">
             <div class="modal-head">
               <div>
                 <span class="modal-sub">Curriculum Editor</span>
                 <h3 class="modal-title">Edit Page Content</h3>
               </div>
-              <button type="button" class="btn-close" (click)="editModalOpen.set(false)">&times;</button>
             </div>
 
             <!-- Editor Navigation Tabs -->
@@ -569,6 +579,14 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                 (click)="editTab.set('preview')"
               >
                 Live Page Preview
+              </button>
+              <button
+                type="button"
+                class="modal-tab-btn"
+                [class.active]="editTab() === 'versions'"
+                (click)="switchTabToVersions()"
+              >
+                Version History & Drafts
               </button>
             </div>
 
@@ -824,6 +842,18 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   </div>
                 </div>
 
+                <div class="form-group" style="margin-top: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                  <label for="change-summary">Version Change Log / Summary (Optional):</label>
+                  <input
+                    id="change-summary"
+                    type="text"
+                    [(ngModel)]="versionChangeSummary"
+                    class="form-input"
+                    placeholder="e.g. Updated border clearance steps for cross-border transit"
+                    style="font-size: 0.9rem;"
+                  />
+                </div>
+
                 @if (editSuccessMsg()) {
                   <div class="form-success">{{ editSuccessMsg() }}</div>
                 }
@@ -831,23 +861,33 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   <div class="form-error">{{ editErrorMsg() }}</div>
                 }
 
-                <div class="modal-actions" style="justify-content: space-between;">
+                <div class="modal-actions" style="justify-content: space-between; flex-wrap: wrap; gap: 0.8rem;">
                   <button
                     type="button"
                     class="btn-delete"
-                    [disabled]="deletingSection() || savingEdit()"
-                    (click)="handleDeleteCurrentSection()"
+                    [disabled]="deletingSection() || savingEdit() || savingDraft()"
+                    (click)="confirmDeletePage(selectedSubtopicId(), editTitle)"
                     title="Delete this page"
                   >
-                    {{ deletingSection() ? 'Deleting...' : 'Delete Page' }}
+                    Delete Page
                   </button>
-                  <div style="display: flex; gap: 0.8rem;">
+                  <div style="display: flex; gap: 0.8rem; flex-wrap: wrap;">
                     <button
                       type="button"
                       class="btn-cancel"
-                      (click)="editModalOpen.set(false)"
+                      (click)="requestExitEditor()"
                     >
                       Close
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      style="font-size: 0.88rem; font-weight: 600; padding: 0.5rem 1rem;"
+                      [disabled]="savingDraft() || savingEdit() || !editTitle.trim()"
+                      (click)="handleSaveDraft()"
+                      title="Save as Draft revision without publishing live to readers"
+                    >
+                      {{ savingDraft() ? 'Saving Draft...' : 'Save as Draft' }}
                     </button>
                     <button
                       type="button"
@@ -860,15 +900,15 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                     </button>
                     <button
                       type="button"
-                      class="btn-save"
-                      [disabled]="savingEdit() || !editTitle.trim() || deletingSection()"
+                      class="btn-save btn-publish-live"
+                      [disabled]="savingEdit() || savingDraft() || !editTitle.trim() || deletingSection()"
                       (click)="handleSaveContentEdit()"
                     >
-                      {{ savingEdit() ? 'Saving...' : 'Save Page Changes' }}
+                      {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
                     </button>
                   </div>
                 </div>
-              } @else {
+              } @else if (editTab() === 'preview') {
                 <!-- Live Page Preview Mode -->
                 <div class="live-preview-container">
                   <div class="preview-notice-bar">
@@ -935,11 +975,11 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                     <button
                       type="button"
                       class="btn-delete"
-                      [disabled]="deletingSection() || savingEdit()"
-                      (click)="handleDeleteCurrentSection()"
+                      [disabled]="deletingSection() || savingEdit() || savingDraft()"
+                      (click)="confirmDeletePage(selectedSubtopicId(), editTitle)"
                       title="Delete this page"
                     >
-                      {{ deletingSection() ? 'Deleting...' : 'Delete Page' }}
+                      Delete Page
                     </button>
                     <div style="display: flex; gap: 0.8rem;">
                       <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
@@ -948,12 +988,99 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                       <button
                         type="button"
                         class="btn-save btn-publish-live"
-                        [disabled]="savingEdit() || !editTitle.trim() || deletingSection()"
+                        [disabled]="savingEdit() || savingDraft() || !editTitle.trim() || deletingSection()"
                         (click)="handleSaveContentEdit()"
                       >
                         {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
                       </button>
                     </div>
+                  </div>
+                </div>
+              } @else {
+                <!-- Version History & Drafts Tab -->
+                <div class="version-history-container">
+                  <div class="version-history-header">
+                    <div>
+                      <h4 style="margin: 0 0 0.3rem; font-size: 1.15rem; font-weight: 700; color: #0f172a;">
+                        Revision History & Version Control
+                      </h4>
+                      <p style="margin: 0; font-size: 0.85rem; color: #64748b;">
+                        Review all past versions and drafts of this page. You can restore any previous version at any time.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      style="font-size: 0.82rem; padding: 0.35rem 0.75rem;"
+                      (click)="loadVersionsForSelectedPage()"
+                    >
+                      Refresh Versions
+                    </button>
+                  </div>
+
+                  @if (loadingVersions()) {
+                    <div style="padding: 2.5rem; text-align: center; color: #64748b; font-size: 0.95rem;">
+                      Loading version history...
+                    </div>
+                  } @else if (sectionVersions().length === 0) {
+                    <div class="version-empty-state">
+                      <p style="margin: 0 0 0.5rem; font-weight: 700; color: #334155;">No previous versions recorded yet.</p>
+                      <p style="margin: 0; font-size: 0.85rem; color: #64748b;">
+                        Whenever you save a draft or publish updates to this page, new versions will appear here automatically.
+                      </p>
+                    </div>
+                  } @else {
+                    <div class="version-list">
+                      @for (v of sectionVersions(); track v.id) {
+                        <div class="version-item" [class.is-draft]="v.status === 'DRAFT'">
+                          <div class="version-item-header">
+                            <div style="display: flex; align-items: center; gap: 0.6rem;">
+                              <span class="version-badge" [class.badge-draft]="v.status === 'DRAFT'">
+                                {{ v.status === 'DRAFT' ? 'DRAFT' : 'V' + v.versionNumber }}
+                              </span>
+                              <strong style="font-size: 0.95rem; color: #0f172a;">{{ v.title }}</strong>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #64748b;">
+                              {{ v.createdAt | date:'medium' }} by <strong>{{ v.createdBy }}</strong>
+                            </div>
+                          </div>
+
+                          @if (v.changeSummary) {
+                            <div class="version-summary">
+                              <strong>Note:</strong> {{ v.changeSummary }}
+                            </div>
+                          }
+
+                          <div class="version-actions">
+                            <button
+                              type="button"
+                              class="btn btn-secondary"
+                              style="font-size: 0.8rem; padding: 0.3rem 0.7rem;"
+                              (click)="loadVersionIntoEditor(v)"
+                              title="Load this version into the editor to inspect or modify"
+                            >
+                              Inspect in Editor
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-gold"
+                              style="font-size: 0.8rem; font-weight: 700; padding: 0.3rem 0.75rem;"
+                              [disabled]="revertingVersion()"
+                              (click)="handleRevertVersion(v.versionNumber)"
+                              title="Restore this version as the live published content"
+                            >
+                              {{ revertingVersion() ? 'Reverting...' : 'Revert to this Version' }}
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="modal-actions" style="margin-top: 1.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn-cancel" (click)="editTab.set('edit')">
+                      Back to Editor
+                    </button>
                   </div>
                 </div>
               }
@@ -1508,7 +1635,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                     {{ creatingPage() ? 'Creating Page...' : 'Create Page' }}
                   </button>
                 </div>
-              } @else {
+              } @else if (editTab() === 'preview') {
                 <!-- Live Page Preview Mode -->
                 <div class="live-preview-container">
                   <div class="preview-notice-bar">
@@ -1598,6 +1725,146 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
         (close)="adminOpen.set(false)"
         (refresh)="loadTree()"
       />
+
+      <!-- Elegant Delete Warning Confirmation Modal -->
+      @if (deleteModalOpen()) {
+        <div class="modal-backdrop" (click)="closeDeleteModal()">
+          <div class="modal-card delete-warning-modal-card" (click)="$event.stopPropagation()">
+            <div class="delete-warning-header">
+              <div class="delete-warning-icon-wrapper">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <span class="delete-warning-sub">Security & Integrity Validation</span>
+                <h3 class="delete-warning-title">
+                  {{ deleteModalType() === 'page' ? 'Confirm Permanent Page Deletion' : 'Confirm Permanent Section Deletion' }}
+                </h3>
+              </div>
+              <button type="button" class="btn-close" (click)="closeDeleteModal()">&times;</button>
+            </div>
+
+            <div class="delete-warning-body">
+              <div class="delete-warning-banner">
+                <strong style="color: #991b1b; display: block; margin-bottom: 0.3rem;">⚠️ Caution: This action cannot be undone!</strong>
+                @if (deleteModalType() === 'page') {
+                  <span>
+                    You are about to permanently delete page <strong>"{{ deleteModalTargetTitle() }}"</strong> from the database. It will be removed immediately from the manual curriculum, search index, and cached table of contents.
+                  </span>
+                } @else {
+                  <span>
+                    You are about to permanently delete section <strong>"{{ deleteModalTargetTitle() }}"</strong>.
+                    @if (deleteModalItemCount() > 0) {
+                      <span style="display: block; margin-top: 0.4rem; font-weight: 700; color: #b91c1c;">
+                        All {{ deleteModalItemCount() }} nested page(s) and operational topics in this section will also be permanently deleted!
+                      </span>
+                    }
+                  </span>
+                }
+              </div>
+
+              @if (deleteModalError()) {
+                <div class="form-error" style="margin-top: 1rem;">{{ deleteModalError() }}</div>
+              }
+            </div>
+
+            <div class="modal-actions" style="justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem;">
+              <button
+                type="button"
+                class="btn-cancel"
+                [disabled]="deleteModalExecuting()"
+                (click)="closeDeleteModal()"
+              >
+                Cancel & Keep Safe
+              </button>
+              <button
+                type="button"
+                class="btn-delete"
+                style="background: #dc2626; color: #fff; font-weight: 700; padding: 0.6rem 1.25rem; border-radius: 6px; border: none; cursor: pointer;"
+                [disabled]="deleteModalExecuting()"
+                (click)="executeConfirmedDelete()"
+              >
+                {{ deleteModalExecuting() ? 'Deleting...' : 'Yes, Delete Permanently' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Unsaved Changes Warning Modal -->
+      @if (unsavedWarningModalOpen()) {
+        <div class="modal-backdrop" (click)="unsavedWarningModalOpen.set(false)" style="z-index: 2200;">
+          <div class="modal-card delete-warning-modal-card" style="border-top-color: #f59e0b;" (click)="$event.stopPropagation()">
+            <div class="delete-warning-header">
+              <div class="delete-warning-icon-wrapper" style="background: #fef3c7; color: #d97706;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <span class="delete-warning-sub" style="color: #b45309;">Unsaved Changes Detected</span>
+                <h3 class="delete-warning-title">Save your changes before exiting?</h3>
+              </div>
+              <button type="button" class="btn-close" (click)="unsavedWarningModalOpen.set(false)">&times;</button>
+            </div>
+
+            <div class="delete-warning-body">
+              <div class="delete-warning-banner" style="background: #fffbeb; border-color: #fde68a; color: #78350f;">
+                <strong style="color: #92400e; display: block; margin-bottom: 0.4rem;">You have unsaved edits on "{{ editTitle || 'this page' }}"</strong>
+                <span>
+                  If you exit now without saving, your recent text, formatting, or image modifications will be discarded. You can save your work as a draft to finish later, or publish it live now.
+                </span>
+              </div>
+            </div>
+
+            <div class="modal-actions" style="justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem;">
+              <button
+                type="button"
+                class="btn-delete"
+                style="border-color: #cbd5e1; color: #64748b;"
+                (click)="forceCloseEditor()"
+                title="Discard your current changes and exit immediately"
+              >
+                Discard & Exit
+              </button>
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  (click)="unsavedWarningModalOpen.set(false)"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  style="font-size: 0.88rem; font-weight: 700; padding: 0.5rem 0.9rem;"
+                  [disabled]="savingDraft()"
+                  (click)="saveAndExitDraft()"
+                  title="Save as a draft version and exit safely"
+                >
+                  {{ savingDraft() ? 'Saving...' : 'Save Draft & Exit' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-save btn-publish-live"
+                  style="font-size: 0.88rem; padding: 0.5rem 1rem;"
+                  [disabled]="savingEdit()"
+                  (click)="saveAndExitLive()"
+                  title="Publish live to readers and exit"
+                >
+                  {{ savingEdit() ? 'Publishing...' : 'Publish & Exit' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     }
   `,
   styles: [
@@ -1666,10 +1933,57 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
         justify-content: center;
         padding: 1.5rem;
       }
+      .editor-backdrop-fullscreen {
+        padding: 0.8rem;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+      }
+      .floating-exit-editor-btn {
+        position: fixed;
+        top: 1rem;
+        right: 1.5rem;
+        z-index: 2150;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: #00143c;
+        border: 2px solid #FFB81C;
+        border-radius: 30px;
+        padding: 0.55rem 1.25rem;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #ffffff;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        transition: all 0.18s ease;
+      }
+      .floating-exit-editor-btn:hover {
+        background: #FFB81C;
+        color: #00143c;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      }
+      .floating-exit-cross {
+        font-size: 1.35rem;
+        line-height: 1;
+        font-weight: 900;
+      }
+      .fullscreen-editor-card {
+        width: 98vw;
+        max-width: 1560px;
+        height: 96vh;
+        max-height: 96vh;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e2e8f0;
+        position: relative;
+      }
       .edit-modal-card {
-        width: 100%;
-        max-width: 760px;
-        max-height: 90vh;
         background: #ffffff;
         border-radius: 12px;
         box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
@@ -2320,6 +2634,128 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
         background: #fef2f2;
         border-color: #ef4444;
       }
+
+      /* Version Control & History Styles */
+      .version-history-container {
+        padding: 0.5rem 0;
+      }
+      .version-history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+      }
+      .version-empty-state {
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px dashed #cbd5e1;
+      }
+      .version-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+        max-height: 480px;
+        overflow-y: auto;
+      }
+      .version-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .version-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .version-item.is-draft {
+        border-left: 4px solid #f59e0b;
+        background: #fffdfa;
+      }
+      .version-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .version-badge {
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        background: #0284c7;
+        color: #ffffff;
+        letter-spacing: 0.05em;
+      }
+      .version-badge.badge-draft {
+        background: #f59e0b;
+        color: #ffffff;
+      }
+      .version-summary {
+        font-size: 0.85rem;
+        color: #475569;
+        margin-bottom: 0.75rem;
+        background: #f1f5f9;
+        padding: 0.4rem 0.75rem;
+        border-radius: 6px;
+      }
+      .version-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.6rem;
+      }
+
+      /* Delete Warning Modal Styles */
+      .delete-warning-modal-card {
+        max-width: 520px;
+        border-top: 4px solid #dc2626;
+      }
+      .delete-warning-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+      }
+      .delete-warning-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .delete-warning-sub {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 700;
+        color: #dc2626;
+      }
+      .delete-warning-title {
+        margin: 0.2rem 0 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #0f172a;
+      }
+      .delete-warning-banner {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 1rem;
+        color: #334155;
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
       .reorder-btn-group {
         display: inline-flex;
         align-items: center;
@@ -2424,13 +2860,38 @@ export class HomeComponent implements OnInit {
   editContentText = '';
   editImageUrl = '';
   editBlocks = signal<ContentBlock[]>([]);
-  editTab = signal<'edit' | 'preview'>('edit');
+  editTab = signal<'edit' | 'preview' | 'versions'>('edit');
   loadingSectionEdit = signal(false);
   savingEdit = signal(false);
+  savingDraft = signal(false);
   deletingSection = signal(false);
   editSuccessMsg = signal('');
   editErrorMsg = signal('');
   previewImages = signal<Record<string, string>>({});
+
+  // Version Control & History
+  sectionVersions = signal<SectionVersion[]>([]);
+  loadingVersions = signal(false);
+  revertingVersion = signal(false);
+  versionChangeSummary = '';
+
+  // Delete Confirmation Modal State
+  deleteModalOpen = signal(false);
+  deleteModalType = signal<'page' | 'module'>('page');
+  deleteModalTargetId = signal<string | number | null>(null);
+  deleteModalTargetTitle = signal<string>('');
+  deleteModalItemCount = signal<number>(0);
+  deleteModalExecuting = signal(false);
+  deleteModalError = signal('');
+
+  // Unsaved Changes Confirmation Dialog State
+  unsavedWarningModalOpen = signal(false);
+  initialEditState = {
+    title: '',
+    overview: '',
+    imageUrl: '',
+    rawContent: '',
+  };
 
   // Module Settings Editor
   moduleModalOpen = signal(false);
@@ -2492,16 +2953,43 @@ export class HomeComponent implements OnInit {
     public notificationService: NotificationService,
     private manualService: ManualService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
-    this.loadTree();
+    this.loadTree().then(() => {
+      this.checkRouteForEditRequest();
+    });
   }
 
-  async loadTree() {
+  private checkRouteForEditRequest() {
+    const editPageId = this.route.snapshot.queryParamMap.get('editPageId');
+    if (editPageId) {
+      this.selectedSubtopicId.set(editPageId);
+      this.editModalOpen.set(true);
+      this.editTab.set('edit');
+      this.loadSectionDataForEdit(editPageId);
+      // Clean query params from URL without reload
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { editPageId: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+  }
+
+  async loadTree(forceRefresh: boolean = false) {
+    const cached = this.manualService.getCachedTree();
+    if (!forceRefresh && cached) {
+      this.tree.set(cached);
+      this.loading.set(false);
+      return;
+    }
+
     try {
       this.loading.set(true);
-      const data = await this.manualService.fetchContentTree();
+      const data = await this.manualService.fetchContentTree(forceRefresh);
       this.tree.set(data);
     } catch {
       this.tree.set(null);
@@ -3025,6 +3513,14 @@ export class HomeComponent implements OnInit {
       }).filter(Boolean).join('\n\n');
       this.editContentText = raw;
       this.editBlocks.set(this.parseRawToBlocks(raw));
+
+      // Record initial baseline to track unsaved modifications
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: raw,
+      };
     } catch (err: any) {
       this.editErrorMsg.set('Failed to load section data.');
     } finally {
@@ -3061,6 +3557,51 @@ export class HomeComponent implements OnInit {
     return raw.trim().split(/\s+/).filter(Boolean).length;
   }
 
+  async handleSaveDraft() {
+    const subId = this.selectedSubtopicId();
+    if (!subId || !this.editTitle.trim()) return;
+
+    this.savingDraft.set(true);
+    this.editSuccessMsg.set('');
+    this.editErrorMsg.set('');
+
+    const finalContent = this.serializeBlocksToRaw(this.editBlocks());
+    this.editContentText = finalContent;
+
+    try {
+      await this.manualService.saveContentEdit({
+        id: subId,
+        title: this.editTitle,
+        overview: this.editOverview,
+        content: finalContent,
+        imageUrl: this.editImageUrl,
+        isDraft: true,
+        changeSummary: this.versionChangeSummary.trim() || 'Draft revision saved by admin',
+      });
+
+      this.editSuccessMsg.set('Draft revision successfully saved to database! Live readers continue seeing current published version.');
+      this.versionChangeSummary = '';
+
+      // Update baseline since changes have been saved to draft
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: finalContent,
+      };
+
+      if (this.editTab() === 'versions') {
+        await this.loadVersionsForSelectedPage();
+      }
+    } catch (err: any) {
+      this.editErrorMsg.set(
+        err?.message || 'Failed to save draft. Make sure you are logged in as admin.',
+      );
+    } finally {
+      this.savingDraft.set(false);
+    }
+  }
+
   async handleSaveContentEdit() {
     const subId = this.selectedSubtopicId();
     if (!subId || !this.editTitle.trim()) return;
@@ -3079,9 +3620,20 @@ export class HomeComponent implements OnInit {
         overview: this.editOverview,
         content: finalContent,
         imageUrl: this.editImageUrl,
+        isDraft: false,
+        changeSummary: this.versionChangeSummary.trim() || 'Published update',
       });
 
-      this.editSuccessMsg.set('Content successfully saved and updated in database.');
+      this.editSuccessMsg.set('Content successfully published and updated live in database!');
+      this.versionChangeSummary = '';
+
+      // Update baseline since changes have been published live
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: finalContent,
+      };
 
       // Update local preview snippet & image immediately so cards reflect updated text & image
       const cleanSavedOverview = this.editOverview.trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -3105,46 +3657,174 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  async handleDeleteDirect(sub: SubTopic) {
-    const ok = window.confirm(
-      `Are you sure you want to delete "${sub.title}"?\n\nThis will permanently remove this page from the manual.`
-    );
-    if (!ok) return;
+  // --- Version Control Methods ---
+
+  async switchTabToVersions() {
+    this.editTab.set('versions');
+    await this.loadVersionsForSelectedPage();
+  }
+
+  async loadVersionsForSelectedPage() {
+    const subId = this.selectedSubtopicId();
+    if (!subId) return;
+
+    this.loadingVersions.set(true);
+    try {
+      const versions = await this.manualService.getSectionVersions(subId);
+      this.sectionVersions.set(versions);
+    } catch (err) {
+      console.error('Failed to load section versions:', err);
+      this.sectionVersions.set([]);
+    } finally {
+      this.loadingVersions.set(false);
+    }
+  }
+
+  loadVersionIntoEditor(v: SectionVersion) {
+    this.editTitle = v.title || '';
+    this.editOverview = v.overview || '';
+    this.editImageUrl = v.imageUrl || '';
+    this.editContentText = v.content || '';
+    this.editBlocks.set(this.parseRawToBlocks(v.content || ''));
+    this.versionChangeSummary = `Loaded from Version ${v.versionNumber} (${v.status})`;
+    this.editTab.set('edit');
+    this.editSuccessMsg.set(`Loaded Version ${v.versionNumber} into the editor. You can review, modify, save as draft, or publish live.`);
+  }
+
+  async handleRevertVersion(versionNumber: number) {
+    const subId = this.selectedSubtopicId();
+    if (!subId) return;
+
+    this.revertingVersion.set(true);
+    this.editSuccessMsg.set('');
+    this.editErrorMsg.set('');
 
     try {
-      await this.manualService.deleteSection(sub.id);
-      if (this.activeSubtopicId() === sub.id) {
-        this.activeSubtopicId.set(null);
-      }
+      await this.manualService.revertSectionVersion(subId, versionNumber);
+      this.editSuccessMsg.set(`Successfully restored live content to Version ${versionNumber}!`);
+      // Reload current section data
+      await this.loadSectionDataForEdit(subId);
+      await this.loadVersionsForSelectedPage();
       await this.loadTree();
     } catch (err: any) {
-      alert(err?.message || 'Failed to delete page.');
+      this.editErrorMsg.set(err?.message || 'Failed to revert to this version.');
+    } finally {
+      this.revertingVersion.set(false);
     }
+  }
+
+  // --- Delete Validation & Confirmation Dialog Methods ---
+
+  confirmDeletePage(subId: string | number, title: string) {
+    this.deleteModalType.set('page');
+    this.deleteModalTargetId.set(subId);
+    this.deleteModalTargetTitle.set(title || 'this page');
+    this.deleteModalItemCount.set(0);
+    this.deleteModalError.set('');
+    this.deleteModalOpen.set(true);
+  }
+
+  confirmDeleteModule(sec: Section) {
+    if (!sec.rawId) {
+      alert('Cannot delete this section because its database ID is missing.');
+      return;
+    }
+    const subCount = this.getAllSubtopics(sec).length;
+    this.deleteModalType.set('module');
+    this.deleteModalTargetId.set(sec.rawId);
+    this.deleteModalTargetTitle.set(sec.title);
+    this.deleteModalItemCount.set(subCount);
+    this.deleteModalError.set('');
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal() {
+    if (this.deleteModalExecuting()) return;
+    this.deleteModalOpen.set(false);
+    this.deleteModalTargetId.set(null);
+    this.deleteModalError.set('');
+  }
+
+  async executeConfirmedDelete() {
+    const targetId = this.deleteModalTargetId();
+    if (!targetId) return;
+
+    this.deleteModalExecuting.set(true);
+    this.deleteModalError.set('');
+
+    try {
+      if (this.deleteModalType() === 'page') {
+        await this.manualService.deleteSection(String(targetId));
+        if (this.activeSubtopicId() === String(targetId)) {
+          this.activeSubtopicId.set(null);
+        }
+        if (this.editModalOpen()) {
+          this.editModalOpen.set(false);
+        }
+        this.closeDeleteModal();
+        await this.loadTree();
+      } else {
+        await this.manualService.deleteTopic(Number(targetId));
+        if (this.moduleModalOpen()) {
+          this.closeModuleEditor();
+        }
+        this.closeDeleteModal();
+        await this.loadTree();
+      }
+    } catch (err: any) {
+      this.deleteModalError.set(err?.message || 'Failed to execute deletion.');
+    } finally {
+      this.deleteModalExecuting.set(false);
+    }
+  }
+
+  async handleDeleteDirect(sub: SubTopic) {
+    this.confirmDeletePage(sub.id, sub.title);
   }
 
   async handleDeleteCurrentSection() {
     const subId = this.selectedSubtopicId();
     if (!subId) return;
+    this.confirmDeletePage(subId, this.editTitle || 'this page');
+  }
 
-    const title = this.editTitle || 'this page';
-    const ok = window.confirm(
-      `Are you sure you want to permanently delete "${title}"?`
+  // --- Unsaved Changes & Exit Navigation Handlers ---
+
+  hasUnsavedChanges(): boolean {
+    if (!this.editModalOpen()) return false;
+    const currentRaw = this.serializeBlocksToRaw(this.editBlocks());
+    return (
+      (this.editTitle || '') !== (this.initialEditState.title || '') ||
+      (this.editOverview || '') !== (this.initialEditState.overview || '') ||
+      (this.editImageUrl || '') !== (this.initialEditState.imageUrl || '') ||
+      currentRaw !== (this.initialEditState.rawContent || '')
     );
-    if (!ok) return;
+  }
 
-    this.deletingSection.set(true);
-    this.editErrorMsg.set('');
-    try {
-      await this.manualService.deleteSection(subId);
-      this.editModalOpen.set(false);
-      if (this.activeSubtopicId() === subId) {
-        this.activeSubtopicId.set(null);
-      }
-      await this.loadTree();
-    } catch (err: any) {
-      this.editErrorMsg.set(err?.message || 'Failed to delete page.');
-    } finally {
-      this.deletingSection.set(false);
+  requestExitEditor() {
+    if (this.hasUnsavedChanges()) {
+      this.unsavedWarningModalOpen.set(true);
+    } else {
+      this.forceCloseEditor();
+    }
+  }
+
+  forceCloseEditor() {
+    this.unsavedWarningModalOpen.set(false);
+    this.editModalOpen.set(false);
+  }
+
+  async saveAndExitDraft() {
+    await this.handleSaveDraft();
+    if (!this.editErrorMsg()) {
+      this.forceCloseEditor();
+    }
+  }
+
+  async saveAndExitLive() {
+    await this.handleSaveContentEdit();
+    if (!this.editErrorMsg()) {
+      this.forceCloseEditor();
     }
   }
 
@@ -3216,45 +3896,6 @@ export class HomeComponent implements OnInit {
       );
     } finally {
       this.savingModule.set(false);
-    }
-  }
-
-  async confirmDeleteModule(sec: Section) {
-    if (!sec.rawId) {
-      alert('Cannot delete this section because its database ID is missing.');
-      return;
-    }
-
-    const subtopicsCount = this.getAllSubtopics(sec).length;
-    const pageWord = subtopicsCount === 1 ? 'page' : 'pages';
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${sec.title}"?\n\n` +
-      `⚠️ WARNING: This section contains ${subtopicsCount} ${pageWord}/items. ` +
-      `If you delete this section, all ${subtopicsCount} of its ${pageWord} and items will also be permanently deleted from the manual!\n\n` +
-      `Do you want to proceed with deleting this section?`
-    );
-
-    if (!confirmed) return;
-
-    await this.executeDeleteModule(sec.rawId, sec.title);
-  }
-
-  async executeDeleteModule(topicId: number, title: string) {
-    this.deletingModule.set(true);
-    this.moduleErrorMsg.set('');
-    try {
-      await this.manualService.deleteTopic(topicId);
-      if (this.moduleModalOpen()) {
-        this.closeModuleEditor();
-      }
-      await this.loadTree();
-      alert(`Section "${title}" and all its pages have been successfully deleted.`);
-    } catch (err: any) {
-      this.moduleErrorMsg.set(err?.message || 'Failed to delete section.');
-      alert(err?.message || 'Failed to delete section.');
-    } finally {
-      this.deletingModule.set(false);
     }
   }
 
