@@ -542,22 +542,24 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
       <!-- Main Page Content Editor Modal -->
       @if (editModalOpen()) {
-        <div class="modal-backdrop" (click)="editModalOpen.set(false)">
-          <div class="modal-card edit-modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-backdrop editor-backdrop-fullscreen" (click)="requestExitEditor()">
+          <!-- Floating Sticky Exit Button Outside Content Area -->
+          <button
+            type="button"
+            class="floating-exit-editor-btn"
+            (click)="$event.stopPropagation(); requestExitEditor()"
+            title="Exit Editor (Esc)"
+          >
+            <span>Exit Editor</span>
+            <span class="floating-exit-cross">&times;</span>
+          </button>
+
+          <div class="modal-card edit-modal-card fullscreen-editor-card" (click)="$event.stopPropagation()">
             <div class="modal-head">
               <div>
                 <span class="modal-sub">Curriculum Editor</span>
                 <h3 class="modal-title">Edit Page Content</h3>
               </div>
-              <button
-                type="button"
-                class="btn-exit-editor"
-                (click)="editModalOpen.set(false)"
-                title="Exit Editor (Esc)"
-              >
-                <span>Exit Editor</span>
-                <span class="exit-cross">&times;</span>
-              </button>
             </div>
 
             <!-- Editor Navigation Tabs -->
@@ -873,7 +875,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                     <button
                       type="button"
                       class="btn-cancel"
-                      (click)="editModalOpen.set(false)"
+                      (click)="requestExitEditor()"
                     >
                       Close
                     </button>
@@ -1791,6 +1793,78 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
           </div>
         </div>
       }
+
+      <!-- Unsaved Changes Warning Modal -->
+      @if (unsavedWarningModalOpen()) {
+        <div class="modal-backdrop" (click)="unsavedWarningModalOpen.set(false)" style="z-index: 2200;">
+          <div class="modal-card delete-warning-modal-card" style="border-top-color: #f59e0b;" (click)="$event.stopPropagation()">
+            <div class="delete-warning-header">
+              <div class="delete-warning-icon-wrapper" style="background: #fef3c7; color: #d97706;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <span class="delete-warning-sub" style="color: #b45309;">Unsaved Changes Detected</span>
+                <h3 class="delete-warning-title">Save your changes before exiting?</h3>
+              </div>
+              <button type="button" class="btn-close" (click)="unsavedWarningModalOpen.set(false)">&times;</button>
+            </div>
+
+            <div class="delete-warning-body">
+              <div class="delete-warning-banner" style="background: #fffbeb; border-color: #fde68a; color: #78350f;">
+                <strong style="color: #92400e; display: block; margin-bottom: 0.4rem;">You have unsaved edits on "{{ editTitle || 'this page' }}"</strong>
+                <span>
+                  If you exit now without saving, your recent text, formatting, or image modifications will be discarded. You can save your work as a draft to finish later, or publish it live now.
+                </span>
+              </div>
+            </div>
+
+            <div class="modal-actions" style="justify-content: space-between; flex-wrap: wrap; gap: 0.8rem; margin-top: 1.5rem;">
+              <button
+                type="button"
+                class="btn-delete"
+                style="border-color: #cbd5e1; color: #64748b;"
+                (click)="forceCloseEditor()"
+                title="Discard your current changes and exit immediately"
+              >
+                Discard & Exit
+              </button>
+              <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                <button
+                  type="button"
+                  class="btn-cancel"
+                  (click)="unsavedWarningModalOpen.set(false)"
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  style="font-size: 0.88rem; font-weight: 700; padding: 0.5rem 0.9rem;"
+                  [disabled]="savingDraft()"
+                  (click)="saveAndExitDraft()"
+                  title="Save as a draft version and exit safely"
+                >
+                  {{ savingDraft() ? 'Saving...' : 'Save Draft & Exit' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn-save btn-publish-live"
+                  style="font-size: 0.88rem; padding: 0.5rem 1rem;"
+                  [disabled]="savingEdit()"
+                  (click)="saveAndExitLive()"
+                  title="Publish live to readers and exit"
+                >
+                  {{ savingEdit() ? 'Publishing...' : 'Publish & Exit' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     }
   `,
   styles: [
@@ -1859,43 +1933,63 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
         justify-content: center;
         padding: 1.5rem;
       }
-      .edit-modal-card {
+      .editor-backdrop-fullscreen {
+        padding: 0.8rem;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+      }
+      .floating-exit-editor-btn {
+        position: fixed;
+        top: 1rem;
+        right: 1.5rem;
+        z-index: 2150;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: #00143c;
+        border: 2px solid #FFB81C;
+        border-radius: 30px;
+        padding: 0.55rem 1.25rem;
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #ffffff;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        transition: all 0.18s ease;
+      }
+      .floating-exit-editor-btn:hover {
+        background: #FFB81C;
+        color: #00143c;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      }
+      .floating-exit-cross {
+        font-size: 1.35rem;
+        line-height: 1;
+        font-weight: 900;
+      }
+      .fullscreen-editor-card {
         width: 98vw;
-        max-width: 1440px;
+        max-width: 1560px;
         height: 96vh;
         max-height: 96vh;
         background: #ffffff;
-        border-radius: 12px;
+        border-radius: 14px;
         box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35);
         overflow-y: auto;
         display: flex;
         flex-direction: column;
+        border: 1px solid #e2e8f0;
+        position: relative;
       }
-      .btn-exit-editor {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
+      .edit-modal-card {
         background: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 0.45rem 0.95rem;
-        font-size: 0.88rem;
-        font-weight: 700;
-        color: #1e293b;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-      .btn-exit-editor:hover {
-        background: #f1f5f9;
-        border-color: #94a3b8;
-        color: #0f172a;
-      }
-      .exit-cross {
-        font-size: 1.25rem;
-        line-height: 1;
-        font-weight: 800;
-        color: #64748b;
+        border-radius: 12px;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
       .modal-head {
         padding: 1.2rem 1.6rem;
@@ -2790,6 +2884,15 @@ export class HomeComponent implements OnInit {
   deleteModalExecuting = signal(false);
   deleteModalError = signal('');
 
+  // Unsaved Changes Confirmation Dialog State
+  unsavedWarningModalOpen = signal(false);
+  initialEditState = {
+    title: '',
+    overview: '',
+    imageUrl: '',
+    rawContent: '',
+  };
+
   // Module Settings Editor
   moduleModalOpen = signal(false);
   selectedModule = signal<Section | null>(null);
@@ -3390,6 +3493,14 @@ export class HomeComponent implements OnInit {
       }).filter(Boolean).join('\n\n');
       this.editContentText = raw;
       this.editBlocks.set(this.parseRawToBlocks(raw));
+
+      // Record initial baseline to track unsaved modifications
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: raw,
+      };
     } catch (err: any) {
       this.editErrorMsg.set('Failed to load section data.');
     } finally {
@@ -3450,6 +3561,15 @@ export class HomeComponent implements OnInit {
 
       this.editSuccessMsg.set('Draft revision successfully saved to database! Live readers continue seeing current published version.');
       this.versionChangeSummary = '';
+
+      // Update baseline since changes have been saved to draft
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: finalContent,
+      };
+
       if (this.editTab() === 'versions') {
         await this.loadVersionsForSelectedPage();
       }
@@ -3486,6 +3606,14 @@ export class HomeComponent implements OnInit {
 
       this.editSuccessMsg.set('Content successfully published and updated live in database!');
       this.versionChangeSummary = '';
+
+      // Update baseline since changes have been published live
+      this.initialEditState = {
+        title: this.editTitle,
+        overview: this.editOverview,
+        imageUrl: this.editImageUrl,
+        rawContent: finalContent,
+      };
 
       // Update local preview snippet & image immediately so cards reflect updated text & image
       const cleanSavedOverview = this.editOverview.trim().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -3638,6 +3766,46 @@ export class HomeComponent implements OnInit {
     const subId = this.selectedSubtopicId();
     if (!subId) return;
     this.confirmDeletePage(subId, this.editTitle || 'this page');
+  }
+
+  // --- Unsaved Changes & Exit Navigation Handlers ---
+
+  hasUnsavedChanges(): boolean {
+    if (!this.editModalOpen()) return false;
+    const currentRaw = this.serializeBlocksToRaw(this.editBlocks());
+    return (
+      (this.editTitle || '') !== (this.initialEditState.title || '') ||
+      (this.editOverview || '') !== (this.initialEditState.overview || '') ||
+      (this.editImageUrl || '') !== (this.initialEditState.imageUrl || '') ||
+      currentRaw !== (this.initialEditState.rawContent || '')
+    );
+  }
+
+  requestExitEditor() {
+    if (this.hasUnsavedChanges()) {
+      this.unsavedWarningModalOpen.set(true);
+    } else {
+      this.forceCloseEditor();
+    }
+  }
+
+  forceCloseEditor() {
+    this.unsavedWarningModalOpen.set(false);
+    this.editModalOpen.set(false);
+  }
+
+  async saveAndExitDraft() {
+    await this.handleSaveDraft();
+    if (!this.editErrorMsg()) {
+      this.forceCloseEditor();
+    }
+  }
+
+  async saveAndExitLive() {
+    await this.handleSaveContentEdit();
+    if (!this.editErrorMsg()) {
+      this.forceCloseEditor();
+    }
   }
 
   // --- Module Settings Editor Methods ---
