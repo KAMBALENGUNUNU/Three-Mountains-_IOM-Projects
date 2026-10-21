@@ -877,7 +877,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                       (click)="handleSaveDraft()"
                       title="Save as Draft revision without publishing live to readers"
                     >
-                      {{ savingDraft() ? 'Saving Draft...' : '💾 Save as Draft' }}
+                      {{ savingDraft() ? 'Saving Draft...' : 'Save as Draft' }}
                     </button>
                     <button
                       type="button"
@@ -894,7 +894,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                       [disabled]="savingEdit() || savingDraft() || !editTitle.trim() || deletingSection()"
                       (click)="handleSaveContentEdit()"
                     >
-                      {{ savingEdit() ? 'Publishing...' : '🚀 Save & Publish Live' }}
+                      {{ savingEdit() ? 'Publishing...' : 'Save & Publish Live' }}
                     </button>
                   </div>
                 </div>
@@ -1059,7 +1059,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                               (click)="handleRevertVersion(v.versionNumber)"
                               title="Restore this version as the live published content"
                             >
-                              {{ revertingVersion() ? 'Reverting...' : '↺ Revert to this Version' }}
+                              {{ revertingVersion() ? 'Reverting...' : 'Revert to this Version' }}
                             </button>
                           </div>
                         </div>
