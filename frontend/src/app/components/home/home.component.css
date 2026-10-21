@@ -134,3 +134,100 @@
       .c-sub[draggable="true"] {
         cursor: grab;
       }
+
+      .btn-card-delete {
+        font-size: 0.84rem;
+        font-weight: 700;
+        padding: 0.45rem 0.85rem;
+        border: 1px solid #ef4444;
+        border-radius: 6px;
+        background: transparent;
+        color: #dc2626;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-card-delete:hover {
+        background: #fef2f2;
+      }
+
+      .btn-add-page-direct {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #002244;
+        border: 1px solid #00143c;
+        border-radius: 5px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-add-page-direct:hover {
+        background: #FFB81C;
+        border-color: #e5a414;
+        color: #00143c;
+      }
+
+      .btn-add-page-inside {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        color: #166534;
+        padding: 0.3rem 0.75rem;
+        border-radius: 5px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+      }
+      .btn-add-page-inside:hover {
+        background: #dcfce7;
+        border-color: #4ade80;
+      }
+
+      .btn-edit-module {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #00143c;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-edit-module:hover {
+        background: #FFB81C;
+        border-color: #e5a414;
+        color: #1a1a1a;
+      }
+
+      .btn-delete-module {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #fff;
+        border: 1px solid #fca5a5;
+        border-radius: 5px;
+        padding: 0.35rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #dc2626;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .btn-delete-module:hover {
+        background: #fef2f2;
+        border-color: #ef4444;
+      }
