@@ -6,7 +6,7 @@ Unified full-stack application digitizing the East African Community (EAC) One-S
 
 - **Frontend:** Angular 19 (Standalone Components, Signals, Hash Router, Tailwind-styled responsive UI)
 - **Backend:** Spring Boot 3 (Java 21, Spring Security with stateless JWT, Spring Data JPA, Apache PDFBox, Swagger/OpenAPI)
-- **Database:** PostgreSQL (supports local dev or cloud providers like Render / Supabase / Neon / Heroku with `sslmode=require`)
+- **Database:** PostgreSQL (supports local dev or cloud providers like Supabase / Neon / Heroku with `sslmode=require`)
 - **Deployment:** Unified multi-stage Docker container serving both Angular SPA static assets and Spring Boot REST APIs from a single port.
 
 ---
@@ -31,50 +31,82 @@ Unified full-stack application digitizing the East African Community (EAC) One-S
 
 ---
 
-## Deploying to Render (Single Web Service)
+## Automatic Database Seeding & Default Accounts
 
-1. **Create a PostgreSQL Database on Render:**
-   - Go to Render Dashboard -> **New** -> **PostgreSQL**.
-   - Copy the **Internal Database URL** (e.g., `postgresql://osbp_user:password@dpg-...-a/osbp_db`).
+On initial launch, the Spring Boot `DataSeeder` automatically parses `OSBP MIGRATION MODULE-v 5.4. en.pdf` into structured sections and seeds default credentials:
 
-2. **Deploy the Web Service:**
-   - Go to Render Dashboard -> **New** -> **Web Service**.
-   - Connect this GitHub repository: `Three-Mountains-_IOM-Projects`.
-   - Select **Docker** as the Environment / Runtime.
-   - Leave the Dockerfile Path as `Dockerfile` and Docker Build Context as `.`.
-   - Instance Type: **Free** (or Starter).
-
-3. **Configure Environment Variables in Render:**
-   Under **Environment Variables**, add:
-   - `DATABASE_URL`: Paste the PostgreSQL connection URL from step 1.
-   - `JWT_SECRET`: A secure random 256-bit string (e.g. `c7f92b45e9821a4f009b7c8d9e2f4a1b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f`).
-   - `SPRING_JPA_HIBERNATE_DDL_AUTO`: `update`
-   - `PORT`: `8080` (Render handles port routing automatically).
-
-4. **Automatic Database Seeding:**
-   - On initial container launch, the Spring Boot `DataSeeder` automatically parses `OSBP MIGRATION MODULE-v 5.4. en.pdf` into structured sections and seeds default admin credentials.
-   - Default seeded accounts:
-     - **Admin:** `admin@osbp.com` (Password: `Admin@1234`)
-     - **Admin:** `admin@eac.int` (Password: `Admin@1234`)
-     - **Officer / User:** `officer@osbp.com` (Password: `Officer@1234`)
-     - **Officer / User:** `officer.namanga@eac.int` (Password: `Officer@1234`)
+| Role | Email | Default Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin@osbp.com` | `Admin@1234` |
+| **Admin** | `admin@eac.int` | `Admin@1234` |
+| **Officer / User** | `officer@osbp.com` | `Officer@1234` |
+| **Officer / User** | `officer.namanga@eac.int` | `Officer@1234` |
 
 ---
 
 ## Local Development
 
-### 1. Backend
+### Prerequisites
+- **Java JDK 21+**
+- **Node.js 20+** & **npm**
+- **Maven 3.8+** (or use included `mvnw`)
+- **PostgreSQL 14+** (Local service or cloud PostgreSQL instance)
+
+### 1. Database Setup
+Create a PostgreSQL database named `osbp_db`:
+```sql
+CREATE DATABASE osbp_db;
+```
+Verify or configure credentials in `backend/src/main/resources/application.properties` (or set environment variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`).
+
+### 2. Run the Backend
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
-Backend API will be accessible at `http://localhost:8080`.
-Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+*(On Windows: `mvn spring-boot:run` or `.\mvnw.cmd spring-boot:run`)*
 
-### 2. Frontend
+- Backend API: `http://localhost:8080`
+- Swagger UI / OpenAPI: `http://localhost:8080/swagger-ui/index.html`
+
+### 3. Run the Frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
-Angular dev server will be accessible at `http://localhost:4200` (auto-proxies API requests to `http://localhost:8080`).
+- Angular dev server: `http://localhost:4200` (automatically proxies API requests to `http://localhost:8080`).
+
+---
+
+## Running with Docker
+
+You can run the entire unified stack (Frontend + Backend) inside Docker:
+
+```bash
+# Build the multi-stage image
+docker build -t osbp-field-guide .
+
+# Run the container
+docker run -p 8080:8080 \
+  -e DATABASE_URL="postgresql://postgres:password@host.docker.internal:5432/osbp_db" \
+  -e JWT_SECRET="your-256-bit-secret" \
+  osbp-field-guide
+```
+The application will be accessible at `http://localhost:8080`.
+
+---
+
+## Contributing Workflow
+
+1. Pull latest changes: `git checkout main && git pull origin main`
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make changes and verify:
+   - Frontend build: `cd frontend && npm run build`
+4. Commit and push:
+   ```bash
+   git add .
+   git commit -m "feat: your feature summary"
+   git push origin feature/your-feature-name
+   ```
+5. Open a Pull Request (PR) against `main`.
