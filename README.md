@@ -79,21 +79,21 @@ npm start
 
 ---
 
-## Running with Docker
+## Running with Docker (Zero Dependencies)
 
-You can run the entire unified stack (Frontend + Backend) inside Docker:
+If you have Docker Desktop installed, you can launch the complete full-stack environment (PostgreSQL database + Spring Boot backend + Angular frontend) with a single command without installing Java, Node.js, or PostgreSQL locally:
 
 ```bash
-# Build the multi-stage image
-docker build -t osbp-field-guide .
-
-# Run the container
-docker run -p 8080:8080 \
-  -e DATABASE_URL="postgresql://postgres:password@host.docker.internal:5432/osbp_db" \
-  -e JWT_SECRET="your-256-bit-secret" \
-  osbp-field-guide
+docker compose up --build
 ```
-The application will be accessible at `http://localhost:8080`.
+
+- **PostgreSQL Database:** Automatically initialized and linked on port `5432`.
+- **Application (Frontend + Backend):** Accessible at `http://localhost:8080`.
+- **Database Seeding:** Automatically runs on the first launch to ingest the PDF manual and set up default accounts.
+- To stop the services:
+  ```bash
+  docker compose down
+  ```
 
 ---
 

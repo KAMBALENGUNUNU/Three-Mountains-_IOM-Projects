@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: osbp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: osbp_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: osbp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d osbp_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: osbp-field-guide-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/osbp_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: osbp_password
+      JWT_SECRET: osbp-super-secret-key-change-me-in-production-must-be-at-least-256-bits
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - lucene_data:/root/osbp-lucene-index
+
+volumes:
+  postgres_data:
+    driver: local
+  lucene_data:
+    driver: local
